@@ -19,19 +19,19 @@ class T2_T2star(AbstractFitting):
         if self.dim == 2:
             dcm_files = get_dcm_list(folder)
             dcm_files = [[dcm] for dcm in dcm_files]
-            TEs = get_tes(dcm_files)
-        if self.dim == 3:
+            TEs, order = get_tes(dcm_files)
+        elif self.dim == 3:
             dcm_files = get_dcm_list(folder)
             if len(dcm_files) == 0:
                 echos = folder.glob('*/')
                 dcm_files = [get_dcm_list(echo) for echo in echos]
                 dcm_files = [item for sublist in dcm_files for item in sublist]
             dcm_files = split_dcm_list(dcm_files)
-            TEs = get_tes(dcm_files)
+            TEs, order = get_tes(dcm_files)
         else:
             raise NotImplementedError
         # echos, z, x, y --> echos, x, y, z
-        dicom = np.array([get_dcm_array(dcm) for dcm in dcm_files]).transpose(0, 3, 2, 1)
+        dicom = np.array([get_dcm_array(dcm_files[o]) for o in order]).transpose(0, 3, 2, 1)
         return dicom, TEs
 
 
@@ -41,4 +41,6 @@ def get_tes(dcm_files):
         info = pydicom.dcmread(dcm[0])
         if info.EchoTime not in TEs:
             TEs.append(info.EchoTime)
-    return [float(te) for te in TEs]
+    tes = np.array([float(te) for te in TEs])
+    order = np.argsort(tes)
+    return tes[order], order
