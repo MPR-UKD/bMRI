@@ -14,9 +14,8 @@ class AbstractFitting(ABC):
         self.bounds = boundary
         self.fit_config = None
 
-    @abstractmethod
-    def set_fit_config(self):
-        pass
+    def set_fit_config(self, fit_config):
+        self.fit_config = fit_config
 
     @abstractmethod
     def read_data(self, folder: str | Path | list):
