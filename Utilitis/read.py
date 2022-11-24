@@ -2,10 +2,10 @@ from pathlib import Path
 import pydicom
 import numpy as np
 import nibabel as nib
-
+from natsort import natsorted
 
 def get_dcm_list(folder: Path):
-    return sorted(folder.glob('*.dcm'))
+    return natsorted(folder.glob('*.dcm'))
 
 def split_dcm_list(dcm_list: list):
     locations = {}
@@ -18,33 +18,31 @@ def split_dcm_list(dcm_list: list):
             locations[d['SliceLocation'].value].append(f)
         else:
             locations[d['SliceLocation'].value] = [f]
-    split_dcmList = [locations[key] for key in locations.keys()]
+    locations = check_locations(locations)
+    split_dcmList = [locations[key] for key in natsorted(list(locations.keys()))]
     echo_list = [[] for _ in range(len(split_dcmList[0]))]
     keys = list(locations.keys())
     keys.sort()
     for key in keys:
         echos = locations[key]
-        echos = sort_echo_list(echos)
         for idx in range(len(echo_list)):
             echo_list[idx].append(echos[idx])
     return echo_list
 
+def check_locations(locations):
+    keys = [key for key in locations.keys()]
+    ls = [len(locations[key]) for key in locations.keys()]
+    echos = np.median(ls)
+    idx = []
+    for i, l in enumerate(ls):
+        if (l - echos) != 0.0:
+            idx.append(i)
+    if len(idx) == 2:
+        locations[keys[idx[0]]] += locations[keys[idx[1]]]
+        locations.pop(keys[idx[1]])
+    return locations
 
-def sort_echo_list(echos: list):
-    instance_numbers = [int(pydicom.dcmread(file).InstanceNumber) for file in echos]
-    series_numbers = [int(pydicom.dcmread(file).SeriesNumber) for file in echos]
 
-    # remove duplicates
-    instance_numbers = list(set(instance_numbers))
-    series_numbers = list(set(series_numbers))
-    if len(instance_numbers) > 1:
-        order = np.argsort(instance_numbers)
-    elif len(series_numbers) > 1:
-        order = np.argsort(series_numbers)
-    else:
-        print("Warning: Sorting not possible!")
-        return echos
-    return [echos[o] for o in order]
 
 
 def get_dcm_array(data: list):
@@ -57,7 +55,7 @@ def get_dcm_array(data: list):
         except AttributeError:
             pass
         array.append(img)
-    array = array[::-1]
+    #array = array[::-1]
     return np.array(array)
 
 
