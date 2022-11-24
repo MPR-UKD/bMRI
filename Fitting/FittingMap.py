@@ -25,12 +25,14 @@ class FittedMap:
         mask = load_nii(mask_file)
 
         for i in range(1, int(mask.array.max()) + 1):
-            fit_map = fitted_map.copy().astype('int16')
+            fit_map = fitted_map.copy().astype('float64')
             fit_map[mask != i] = 0
-            low = np.percentile(fit_map[mask == i], self.low_percentile)
-            up = np.percentile(fit_map[mask == i], self.up_percentile)
-            fit_map[fit_map < low] = 0
-            fit_map[fit_map > up] = 0
-            mask = np.where(fit_map != 0.0, fit_map, np.nan)
+            try:
+                low = np.percentile(fit_map[mask.array == i], self.low_percentile)
+                up = np.percentile(fit_map[mask.array == i], self.up_percentile)
+                fit_map[fit_map < low] = np.nan
+                fit_map[fit_map > up] = np.nan
+            except IndexError:
+                pass
 
         return fitted_map, mask
