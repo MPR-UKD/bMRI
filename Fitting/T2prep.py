@@ -6,8 +6,8 @@ from Utilitis.read import get_dcm_list, get_dcm_array, split_dcm_list
 from .AbstractFitting import AbstractFitting
 
 
-def fit_prep_wrapper(TR, T1, alpha, TE):
-    def fit(x, S0, t2prep, offset):
+def fit_prep_wrapper(TR: float, T1: float, alpha: float, TE: float):
+    def fit(x: np.ndarray, S0: float, t2prep: float, offset: float):
         counter = np.exp(-t2prep / TE) * (1 - np.exp(-(TR - t2prep) / T1))
         denominator = 1 - np.cos(alpha) * np.exp(-t2prep / TE) * np.exp(
             -(TR - t2prep) / T1
@@ -18,7 +18,7 @@ def fit_prep_wrapper(TR, T1, alpha, TE):
 
 
 class T2prep(AbstractFitting):
-    def __init__(self, dim, config, boundary=None):
+    def __init__(self, dim: int, config: dict, boundary: tuple | None = None):
         fit = fit_prep_wrapper(
             config["TR"], config["T1"], config["alpha"], config["TE"]
         )

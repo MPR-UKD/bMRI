@@ -11,8 +11,13 @@ from Fitting.AbstractFitting import AbstractFitting
 # Eq. 4
 
 
-def fit_T1rho_wrapper_raush(TR, T1, alpha):
-    def fit(x, S0, t1rho, offset):
+def fit_T1rho_wrapper_raush(TR: float,
+                            T1: float,
+                            alpha: float):
+    def fit(x: np.ndarray,
+            S0: float,
+            t1rho: float,
+            offset: float) -> np.ndarray:
         counter = (1 - np.exp(-(TR - x) / T1)) * np.exp(-x / t1rho)
         denominator = 1 - np.cos(alpha) * np.exp(-x / t1rho) * np.exp(-(TR - x) / T1)
         return S0 * np.sin(alpha) * counter / denominator + offset
@@ -23,8 +28,15 @@ def fit_T1rho_wrapper_raush(TR, T1, alpha):
 # 3D SPIN-LOCK IMAGING OF HUMAN GLIOMAS
 # https://doi.org/10.1016/S0730-725X(99)00041-7
 # Appendix
-def fit_T1rho_wrapper_aronen(TR, T1, alpha, TE, T2star):
-    def fit(x, S0, t1rho, offset):
+def fit_T1rho_wrapper_aronen(TR: float,
+                             T1: float,
+                             alpha: float,
+                             TE: float,
+                             T2star: float):
+    def fit(x: np.ndarray,
+            S0: float,
+            t1rho: float,
+            offset: float) -> np.ndarray:
         tau = TR - x
         counter = (
             S0
@@ -40,7 +52,10 @@ def fit_T1rho_wrapper_aronen(TR, T1, alpha, TE, T2star):
 
 
 class T1rho(AbstractFitting):
-    def __init__(self, dim, config, boundary=None):
+    def __init__(self,
+                 dim: int,
+                 config: dict,
+                 boundary: tuple | None = None):
         # fit = fit_T1rho_wrapper_raush(config["TR"], config["T1"], config["alpha"])
         fit = fit_T1rho_wrapper_aronen(
             config["TR"], config["T1"], config["alpha"], config["TE"], config["T2star"]
@@ -48,10 +63,7 @@ class T1rho(AbstractFitting):
         super(T1rho, self).__init__(fit, boundary=boundary)
         self.dim = dim
 
-    def set_fit_config(self):
-        pass
-
-    def get_TSL(self, first_SL=10, inc_SL=30, n=4):
+    def get_TSL(self, first_SL: int = 10, inc_SL: int = 30, n: int = 4) -> np.ndarray:
         x = [0, 2 * first_SL]
         for _ in range(1, n - 1):
             x.append(x[-1] + 2 * inc_SL)

@@ -32,7 +32,7 @@ def split_dcm_list(dcm_list: list):
     return echo_list
 
 
-def check_locations(locations):
+def check_locations(locations: dict):
     keys = [key for key in locations.keys()]
     ls = [len(locations[key]) for key in locations.keys()]
     echos = np.median(ls)
@@ -67,7 +67,7 @@ class Mask:
         self.header = header
 
 
-def load_nii(file):
+def load_nii(file: Path):
     nimg = nib.load(file)
     mask = Mask(nimg.get_fdata()[:, :, ::-1], nimg.affine, nimg.header)
     return mask

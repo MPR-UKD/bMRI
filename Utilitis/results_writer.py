@@ -49,6 +49,6 @@ def save_results(
     return results
 
 
-def save_nii(nii, affine, header, file):
+def save_nii(nii: np.ndarray, affine, header, file: Path):
     nii = nii.astype(np.uint16)
     nib.save(nib.Nifti1Image(nii, affine=affine, header=header), file)

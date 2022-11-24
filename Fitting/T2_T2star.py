@@ -5,12 +5,17 @@ from Utilitis.read import get_dcm_list, get_dcm_array, split_dcm_list
 import pydicom
 
 
-def fit(x, S0, t2_t2star, offset):
+def fit(x: np.ndarray,
+        S0: float,
+        t2_t2star: float,
+        offset: float):
     return S0 * np.exp(-x / t2_t2star) + offset
 
 
 class T2_T2star(AbstractFitting):
-    def __init__(self, dim, boundary=None):
+    def __init__(self,
+                 dim: int,
+                 boundary: tuple | None = None):
         super(T2_T2star, self).__init__(fit, boundary=boundary)
         self.dim = dim
 
@@ -37,7 +42,7 @@ class T2_T2star(AbstractFitting):
         return dicom, TEs
 
 
-def get_tes(dcm_files):
+def get_tes(dcm_files: list):
     TEs = []
     for dcm in dcm_files:
         info = pydicom.dcmread(dcm[0])
