@@ -8,21 +8,24 @@ import pydicom
 
 
 class InversionRecoveryT1(AbstractFitting, ABC):
-
     def __init__(self, boundary):
-        super(InversionRecoveryT1, self).__init__(inversion_recovery_t1, boundary=boundary)
+        super(InversionRecoveryT1, self).__init__(
+            inversion_recovery_t1, boundary=boundary
+        )
 
     def read_data(self, folder: str | Path | list):
         if type(folder) is not list:
             folder = Path(folder)
-            echos = folder.glob('*/')
+            echos = folder.glob("*/")
         else:
             echos = [Path(_) for _ in folder]
         dcm_files = [get_dcm_list(echo) for echo in echos]
         dcm_files_flatted = [item for sublist in dcm_files for item in sublist]
         dcm_files = split_dcm_list(dcm_files_flatted)
         order, x = get_ti(dcm_files)
-        dicom = np.array([get_dcm_array(dcm_files[o]) for o in order]).transpose(0, 3, 2, 1)
+        dicom = np.array([get_dcm_array(dcm_files[o]) for o in order]).transpose(
+            0, 3, 2, 1
+        )
         return dicom, x
 
 

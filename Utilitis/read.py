@@ -4,8 +4,10 @@ import numpy as np
 import nibabel as nib
 from natsort import natsorted
 
+
 def get_dcm_list(folder: Path):
-    return natsorted(folder.glob('*.dcm'))
+    return natsorted(folder.glob("*.dcm"))
+
 
 def split_dcm_list(dcm_list: list):
     locations = {}
@@ -14,10 +16,10 @@ def split_dcm_list(dcm_list: list):
             d = pydicom.dcmread(f)
         except BaseException:
             continue
-        if d['SliceLocation'].value in locations.keys():
-            locations[d['SliceLocation'].value].append(f)
+        if d["SliceLocation"].value in locations.keys():
+            locations[d["SliceLocation"].value].append(f)
         else:
-            locations[d['SliceLocation'].value] = [f]
+            locations[d["SliceLocation"].value] = [f]
     locations = check_locations(locations)
     split_dcmList = [locations[key] for key in natsorted(list(locations.keys()))]
     echo_list = [[] for _ in range(len(split_dcmList[0]))]
@@ -28,6 +30,7 @@ def split_dcm_list(dcm_list: list):
         for idx in range(len(echo_list)):
             echo_list[idx].append(echos[idx])
     return echo_list
+
 
 def check_locations(locations):
     keys = [key for key in locations.keys()]
@@ -43,8 +46,6 @@ def check_locations(locations):
     return locations
 
 
-
-
 def get_dcm_array(data: list):
     array = []
     for d in data:
@@ -55,7 +56,7 @@ def get_dcm_array(data: list):
         except AttributeError:
             pass
         array.append(img)
-    #array = array[::-1]
+    # array = array[::-1]
     return np.array(array)
 
 
@@ -64,6 +65,7 @@ class Mask:
         self.array = array
         self.affine = affine
         self.header = header
+
 
 def load_nii(file):
     nimg = nib.load(file)

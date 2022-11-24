@@ -6,15 +6,8 @@ from ..T1rho import T1rho, fit_T1rho_wrapper
 
 
 class TestT1rho(unittest.TestCase):
-
     def setUp(self) -> None:
-        self.config = {
-            "TR": 3000,
-            "T1": 1000,
-            "alpha": 20,
-            "TE": 12,
-            "T2star": 10
-        }
+        self.config = {"TR": 3000, "T1": 1000, "alpha": 20, "TE": 12, "T2star": 10}
 
         self.mask = np.ones(shape=(2, 2, 1))
         self.x = np.array([0, 10, 20, 30, 40, 50, 60, 70])
