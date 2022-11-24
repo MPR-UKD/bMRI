@@ -40,6 +40,13 @@ class T1rho(AbstractFitting):
     def set_fit_config(self):
         pass
 
+    def get_TSL(self, first_SL=10, inc_SL=30, n=4):
+        x = [0, 2 * first_SL]
+        for _ in range(1, n - 1):
+            x.append(x[-1] + 2 * inc_SL)
+        return x
+
+
     def read_data(self, folder: str | Path):
 
         folder = Path(folder)
