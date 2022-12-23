@@ -26,8 +26,8 @@ def test_set_fit_config():
     assert fitting.fit_config == fit_config
 
 
-@pytest.mark.parametrize("multiprocessing", [False, True])
-def test_fit(multiprocessing):
+@pytest.mark.parametrize("pools", [0, 1, 2, 3])
+def test_fit(pools):
     # Test that the fit function returns the expected output
 
     # Define a fit function
@@ -49,7 +49,7 @@ def test_fit(multiprocessing):
     mask = np.ones((2, 2, 1))
 
     # Fit the data
-    fit_maps, r2_map = fitting.fit(dicom, mask, x, multiprocessing=multiprocessing)
+    fit_maps, r2_map = fitting.fit(dicom, mask, x, pools=pools)
 
     # Assert that the output is as expected
     assert len(fit_maps) == 2
@@ -57,8 +57,7 @@ def test_fit(multiprocessing):
     assert abs(fit_maps[1][0, 0] - b) < 0.001
 
 
-@pytest.mark.parametrize("multiprocessing", [False, True])
-def test_fit_reshaped_2D_to_3D(multiprocessing):
+def test_fit_reshaped_2D_to_3D():
     # Define a fit function
     @njit
     def fit_function(x, a, b):
@@ -78,45 +77,12 @@ def test_fit_reshaped_2D_to_3D(multiprocessing):
     mask = np.ones((2, 2))
 
     # Fit the data
-    fit_maps, r2_map = fitting.fit(dicom, mask, x, multiprocessing=multiprocessing)
+    fit_maps, r2_map = fitting.fit(dicom, mask, x)
 
     # Assert that the output is as expected
     assert len(fit_maps) == 2
     assert len(r2_map.shape) == 3
 
-
-def test_multiprocessing_performance():
-    size_x, size_y = 200, 200
-
-    @njit
-    def fit_function(x, a, b, c):
-        return a * np.exp(-x / b) + c
-
-    # Create an instance of the AbstractFitting class
-    fitting = AbstractFitting(fit_function)
-
-    # Generate some data using the fit function
-    a, b, c = 1, 2, 3
-    x = np.array([1, 2, 3, 4, 5, 6])
-    y = fit_function(x, a, b, c)
-    dicom = np.array([np.ones((size_x, size_y)) * y[i] for i in range(len(x))])
-    dicom = dicom.reshape((6, size_x, size_y, 1))
-
-    # Create a mask
-    mask = np.ones((size_x, size_y, 1))
-
-    # Fit the data
-    start = time.time()
-    fit_maps, r2_map = fitting.fit(dicom, mask, x, multiprocessing=False)
-    end = time.time()
-    print(end - start)
-    # Assert that the output is as expected
-    assert len(fit_maps) == 3
-    assert len(r2_map.shape) == 3
-
-
-# 86.4
-# 68.1
 
 if __name__ == "__main__":
     pytest.main()
