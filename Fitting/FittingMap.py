@@ -4,9 +4,7 @@ import numpy as np
 
 
 class FittedMap:
-    def __init__(self,
-                 low_percentile: int = 5,
-                 up_percentile: int = 95):
+    def __init__(self, low_percentile: int = 5, up_percentile: int = 95):
 
         assert low_percentile < up_percentile
         assert 0 <= low_percentile <= 100
@@ -15,9 +13,7 @@ class FittedMap:
         self.low_percentile = low_percentile
         self.up_percentile = up_percentile
 
-    def __call__(self,
-                 dcm_folder: str | Path,
-                 mask_file: str | Path):
+    def __call__(self, dcm_folder: str | Path, mask_file: str | Path):
         dcm_folder = Path(dcm_folder)
         mask_file = Path(mask_file)
         fitted_map = get_dcm_array([_ for _ in dcm_folder.glob("*.dcm")]).transpose(

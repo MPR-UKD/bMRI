@@ -8,14 +8,12 @@ import pydicom
 
 
 class InversionRecoveryT1(AbstractFitting, ABC):
-    def __init__(self,
-                 boundary: tuple):
+    def __init__(self, boundary: tuple):
         super(InversionRecoveryT1, self).__init__(
             inversion_recovery_t1, boundary=boundary
         )
 
-    def read_data(self,
-                  folder: str | Path | list):
+    def read_data(self, folder: str | Path | list):
         if type(folder) is not list:
             folder = Path(folder)
             echos = folder.glob("*/")
@@ -41,8 +39,5 @@ def get_ti(dcm_files: list):
     return order, x[order]
 
 
-def inversion_recovery_t1(x: np.ndarray,
-                          S0: float,
-                          t1: float,
-                          offset: float):
+def inversion_recovery_t1(x: np.ndarray, S0: float, t1: float, offset: float):
     return S0 * (1 - np.exp(-x / t1)) + offset

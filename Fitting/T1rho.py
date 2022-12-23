@@ -11,13 +11,8 @@ from Fitting.AbstractFitting import AbstractFitting
 # Eq. 4
 
 
-def fit_T1rho_wrapper_raush(TR: float,
-                            T1: float,
-                            alpha: float):
-    def fit(x: np.ndarray,
-            S0: float,
-            t1rho: float,
-            offset: float) -> np.ndarray:
+def fit_T1rho_wrapper_raush(TR: float, T1: float, alpha: float):
+    def fit(x: np.ndarray, S0: float, t1rho: float, offset: float) -> np.ndarray:
         counter = (1 - np.exp(-(TR - x) / T1)) * np.exp(-x / t1rho)
         denominator = 1 - np.cos(alpha) * np.exp(-x / t1rho) * np.exp(-(TR - x) / T1)
         return S0 * np.sin(alpha) * counter / denominator + offset
@@ -28,15 +23,10 @@ def fit_T1rho_wrapper_raush(TR: float,
 # 3D SPIN-LOCK IMAGING OF HUMAN GLIOMAS
 # https://doi.org/10.1016/S0730-725X(99)00041-7
 # Appendix
-def fit_T1rho_wrapper_aronen(TR: float,
-                             T1: float,
-                             alpha: float,
-                             TE: float,
-                             T2star: float):
-    def fit(x: np.ndarray,
-            S0: float,
-            t1rho: float,
-            offset: float) -> np.ndarray:
+def fit_T1rho_wrapper_aronen(
+    TR: float, T1: float, alpha: float, TE: float, T2star: float
+):
+    def fit(x: np.ndarray, S0: float, t1rho: float, offset: float) -> np.ndarray:
         tau = TR - x
         counter = (
             S0
@@ -52,10 +42,7 @@ def fit_T1rho_wrapper_aronen(TR: float,
 
 
 class T1rho(AbstractFitting):
-    def __init__(self,
-                 dim: int,
-                 config: dict,
-                 boundary: tuple | None = None):
+    def __init__(self, dim: int, config: dict, boundary: tuple | None = None):
         # fit = fit_T1rho_wrapper_raush(config["TR"], config["T1"], config["alpha"])
         fit = fit_T1rho_wrapper_aronen(
             config["TR"], config["T1"], config["alpha"], config["TE"], config["T2star"]
