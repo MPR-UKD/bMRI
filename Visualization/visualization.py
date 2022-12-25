@@ -1,10 +1,11 @@
 import sys
 
 import PIL.Image
+from matplotlib.cm import get_cmap
 from scipy import ndimage
 import numpy as np
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QImage, QPixmap
+from PyQt5.QtGui import QImage, QPixmap, QPainter
 from PyQt5.QtWidgets import (
     QApplication,
     QMainWindow,
@@ -22,13 +23,14 @@ def calc_scaling_factor(dicom_shape):
 
 
 class ImageViewer(QMainWindow):
-    def __init__(self, dicom, fit_maps, fit_function, time_points):
+    def __init__(self, dicom, fit_maps, fit_function, time_points, c_int: int | None = None, alpha: float = 0.3):
         super(ImageViewer, self).__init__()
 
         self.echo_time = 0
         self.time_points = time_points
         self.dicom = dicom
         self.fit_maps = fit_maps
+        self.color_map = fit_maps[c_int] if c_int is not None else None
         self.fit_function = fit_function
         self.scaling_factor = calc_scaling_factor(dicom.shape)
         self.current_slice = 0
@@ -84,24 +86,42 @@ class ImageViewer(QMainWindow):
         # Get the size of the widget
         size = self.image_label.size()
 
-        # Get the image slice and normalize it to the range [0, 255]
+        # Get the image slice and normalize it to the range [0, 1]
         image = self.dicom[self.echo_time, :, :, self.current_slice]
         image = (image - image.min()) / (image.max() - image.min())
-        image = (image * 255).astype(np.uint8)
 
         # Zoom the image by a factor of 5
         image_zoomed = ndimage.zoom(image, (self.scaling_factor, self.scaling_factor), order=0, mode='nearest')
 
-        # Convert the zoomed image to a QImage and create a QPixmap from it
-        qimage = QImage(image_zoomed, image_zoomed.shape[1], image_zoomed.shape[0], QImage.Format_Grayscale8)
+        # Convert the zoomed image to an RGB image
+        image_zoomed_rgb = np.dstack((image_zoomed, image_zoomed, image_zoomed))
+
+        # Normalize the color map to the range [0, 1]
+        if self.color_map is not None:
+            color_map = self.color_map[:, :, self.current_slice]
+            color_map_norm = (color_map - color_map.min()) / (color_map.max() - color_map.min())
+
+            # Zoom the color map by a factor of 5
+            color_map_zoomed = ndimage.zoom(color_map_norm, (self.scaling_factor, self.scaling_factor), order=0,
+                                            mode='nearest')
+            jet_cmap = get_cmap('jet')
+            color_map_zoomed_rgb = jet_cmap(color_map_zoomed)
+
+            # Overlay the color map on the DICOM image pixel by pixel
+            alpha = 0.3
+            for i in range(image_zoomed.shape[0]):
+                for j in range(image_zoomed.shape[1]):
+                    if color_map_zoomed[i][j] > 0:
+                        image_zoomed_rgb[i][j] = (1-alpha) * image_zoomed_rgb[i][j] + alpha * color_map_zoomed_rgb[i][j][:3]
+
+        image_zoomed_rgb = (image_zoomed_rgb * 255).round().astype('int8')
+        # Convert the zoomed RGB image to a QImage and create a QPixmap from it
+        qimage = QImage(image_zoomed_rgb, image_zoomed_rgb.shape[1], image_zoomed_rgb.shape[0],
+                        image_zoomed_rgb.strides[0], QImage.Format_RGB888)
         pixmap = QPixmap.fromImage(qimage)
 
-        # Scale the pixmap to fit the size of the image label widget
-        pixmap = pixmap.scaled(size, Qt.KeepAspectRatio)
-
-        # Set the pixmap on the image label and display it
+        # Set the pixmap as the background image of the label
         self.image_label.setPixmap(pixmap)
-        self.image_label.show()
 
     def init_fit_function(self):
         self.fit_function_widget = FitFunctionWidget(
@@ -177,7 +197,7 @@ if __name__ == "__main__":
 
     time_points = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
     # Create fitted_map
-    fit_maps = np.random.rand(2, 128, 128, 42)
+    fit_maps = np.array([dicom[0], dicom[0]])
 
     def fit(x, a, b):
         return a * x + b
@@ -186,7 +206,7 @@ if __name__ == "__main__":
 
     app = QApplication(sys.argv)
 
-    viewer = ImageViewer(dicom, fit_maps, fit, time_points)
+    viewer = ImageViewer(dicom, fit_maps, fit, time_points, 1)
     viewer.show()
 
     # Run the PyQt5 application
