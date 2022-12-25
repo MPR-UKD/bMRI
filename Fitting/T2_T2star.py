@@ -22,7 +22,7 @@ def mono_exp(x: np.ndarray, S0: float, t2_t2star: float, offset: float) -> np.nd
     return S0 * np.exp(-x / t2_t2star) + offset
 
 
-class T2_T2Star(AbstractFitting):
+class T2_T2star(AbstractFitting):
     def __init__(
         self, dicom_path: Union[str, Path], dim: int, boundary: Tuple, fit_config: dict
     ):
