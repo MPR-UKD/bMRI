@@ -1,9 +1,7 @@
 from pathlib import Path
 
-import numpy as np
-
 from Utilitis.read import get_dcm_list, get_dcm_array, split_dcm_list
-from .AbstractFitting import AbstractFitting
+from .AbstractFitting import *
 
 
 def fit_prep_wrapper(TR: float, T1: float, alpha: float, TE: float):
@@ -24,6 +22,33 @@ class T2prep(AbstractFitting):
         )
         super(T2prep, self).__init__(fit, boundary=boundary)
         self.dim = dim
+
+    def fit(
+        self,
+        dicom: np.ndarray,
+        mask: np.ndarray,
+        x: np.ndarray,
+        pools: int = cpu_count(),
+        min_r2: float = -np.inf,
+    ) -> Tuple[np.ndarray, np.ndarray]:
+        """
+        Fit the T2* relaxation time for the given DICOM image data.
+
+        Parameters:
+        - dicom: 3D or 4D array of DICOM image data
+        - mask: 2D or 3D array of mask indicating which pixels to include in the fit
+        - min_r2: minimum R^2 value for a fit to be considered valid
+
+        Returns:
+        - fit_maps: 3D or 4D array of fitted T2* values
+        - r2_map: 2D or 3D array of R^2 values for each fit
+        """
+
+        # Call the fit method from the parent class using the provided dicom, mask, and x data
+        fit_maps, r2_map = super().fit(dicom, mask, x, pools=pools, min_r2=min_r2)
+
+        return fit_maps, r2_map
+
 
     def read_data(self, folder: str | Path):
 
