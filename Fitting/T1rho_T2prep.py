@@ -40,13 +40,13 @@ def fit_T1rho_wrapper_aronen(
     return fit
 
 
-class T1rho(AbstractFitting):
+class T1rho_T2prep(AbstractFitting):
     def __init__(self, dim: int, config: dict, boundary: tuple | None = None, normalize: bool = False):
         # fit = fit_T1rho_wrapper_raush(config["TR"], config["T1"], config["alpha"])
         fit = fit_T1rho_wrapper_aronen(
             config["TR"], config["T1"], config["alpha"], config["TE"], config["T2star"]
         )
-        super(T1rho, self).__init__(fit, boundary=boundary, normalize=normalize)
+        super(T1rho_T2prep, self).__init__(fit, boundary=boundary, normalize=normalize)
         self.dim = dim
 
     def fit(
