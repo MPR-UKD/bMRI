@@ -79,7 +79,7 @@ class AbstractFitting(ABC):
                     for p_num, p in enumerate(param):
                         fit_maps[p_num][i, j, k] = p
 
-        return fit_maps, r2_map
+        return np.array(fit_maps), r2_map
 
 
 def fit_pixel(
