@@ -105,7 +105,7 @@ def fit_pixel(
     """
     if normalize:
         y /= y.max()
-    kwargs = {}
+    kwargs = {'xtol': 0.0000000001}
     if bounds is not None:
         kwargs["bounds"] = bounds
     if config is not None:
