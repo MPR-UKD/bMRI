@@ -73,7 +73,7 @@ class AbstractFitting(ABC):
                 if param is None:
                     continue
                 r2_map[i, j, k] = calculate_r2(
-                    dicom[:, i, j, k], self.fit_function, param, x
+                    dicom[:, i, j, k], self.fit_function, param, x, self.normalize
                 )
                 if r2_map[i, j, k] > min_r2:
                     for p_num, p in enumerate(param):
@@ -119,8 +119,10 @@ def fit_pixel(
 
 
 def calculate_r2(
-    y: np.ndarray, fit_function: Callable, param: np.ndarray, x: np.ndarray
+    y: np.ndarray, fit_function: Callable, param: np.ndarray, x: np.ndarray, normalize: bool = False
 ) -> float:
+    if normalize:
+        y /= y.max()
     residuals = y - fit_function(x, *param)
     return get_r2(residuals, y)
 
