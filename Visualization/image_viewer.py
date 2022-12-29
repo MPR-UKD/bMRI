@@ -23,12 +23,14 @@ def calc_scaling_factor(dicom_shape):
 
 
 class ImageViewer(QMainWindow):
-    def __init__(self, dicom, fit_maps, fit_function, time_points, c_int: int | None = None, alpha: float = 0.3):
+    def __init__(self, dicom, fit_maps, fit_function, time_points, c_int: int | None = None, alpha: float = 0.3, normalize: bool = True):
         super(ImageViewer, self).__init__()
 
         self.echo_time = 0
         self.time_points = time_points
         self.dicom = dicom
+        self.alpha = alpha
+        self.norm = normalize
         self.fit_maps = fit_maps
         self.color_map = fit_maps[c_int] if c_int is not None else None
         self.fit_function = fit_function
@@ -139,6 +141,8 @@ class ImageViewer(QMainWindow):
         except IndexError:
             return None
         raw_data = self.dicom[:, y, x, self.current_slice]
+        if self.norm:
+            raw_data /= raw_data.max()
         self.fit_function_widget.update_plot(pixel_params, raw_data)
 
 class FitFunctionWidget(QWidget):
