@@ -25,7 +25,7 @@ def save_results(
     if r2 is not None:
         save_nii(r2, affine, header, nii_folder / "r2.nii.gz")
 
-    save_nii(fit_map, affine, header, nii_folder / "r2.nii.gz")
+    save_nii(fit_map, affine, header, nii_folder / "params.nii.gz")
 
     for ii, parameter in enumerate(parameters):
         save_nii(fit_map[ii], affine, header, nii_folder / f"{parameter}_map.nii.gz")

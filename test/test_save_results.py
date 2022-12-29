@@ -1,9 +1,11 @@
+import tempfile
+
 import numpy as np
 import pytest
 
 from Fitting.T1rho_T2prep import T1rho_T2prep, fit_T1rho_wrapper_aronen
 from Utilitis.results_writer import save_results
-
+from pathlib import Path
 
 def test():
     config = {"TR": 3000, "T1": 1000, "alpha": 20, "TE": 12, "T2star": 10}
@@ -21,8 +23,18 @@ def test():
     t1rho = T1rho_T2prep(2, config, normalize=True, boundary=((1, 0, 0), (40, 140, 1)))
     fit_map, r2 = t1rho.fit(dicom=dicom, mask=mask, x=x)
 
-    tempdir = r'C:\Users\ludge\Desktop\bMRI\test'
-    save_results(f_t1rho, fit_map, r2, mask, affine=np.eye(4), header=None, nii_folder=tempdir, result_folder=tempdir, decimal=',')
+    tempdir = tempfile.TemporaryDirectory()
+    save_results(f_t1rho, fit_map, r2, mask,
+                 affine=np.eye(4), header=None, nii_folder=tempdir.name,
+                 result_folder=tempdir.name, decimal=',')
+
+    for _ in ['offset.csv', 'offset_map.nii.gz', 'params.nii.gz', 'r2.nii.gz', 'S0.csv', 'S0_map.nii.gz', 't1rho.csv',
+              't1rho_map.nii.gz']:
+        exists = False
+        for __ in Path(tempdir.name).glob('*'):
+            if _ == __.name:
+                exists = True
+        assert exists
 
 
 if __name__ == '__main__':
