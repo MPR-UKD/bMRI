@@ -24,6 +24,7 @@ def fit_T1rho_wrapper_raush(TR: float, T1: float, alpha: float):
 def fit_T1rho_wrapper_aronen(
     TR: float, T1: float, alpha: float, TE: float, T2star: float
 ):
+    @njit
     def fit(x: np.ndarray, S0: float, t1rho: float, offset: float) -> np.ndarray:
         tau = TR - x
         counter = (
@@ -33,19 +34,19 @@ def fit_T1rho_wrapper_aronen(
             * np.sin(alpha)
             * np.exp(-TE / T2star)
         )
-        denominator = 1 - np.cos(alpha) * np.exp(tau / T1) * np.exp(x / t1rho)
+        denominator = 1 - np.cos(alpha) * np.exp(-tau / T1) * np.exp(-x / t1rho)
         return counter / denominator + offset
 
     return fit
 
 
 class T1rho(AbstractFitting):
-    def __init__(self, dim: int, config: dict, boundary: tuple | None = None):
+    def __init__(self, dim: int, config: dict, boundary: tuple | None = None, normalize: bool = False):
         # fit = fit_T1rho_wrapper_raush(config["TR"], config["T1"], config["alpha"])
         fit = fit_T1rho_wrapper_aronen(
             config["TR"], config["T1"], config["alpha"], config["TE"], config["T2star"]
         )
-        super(T1rho, self).__init__(fit, boundary=boundary)
+        super(T1rho, self).__init__(fit, boundary=boundary, normalize=normalize)
         self.dim = dim
 
     def fit(

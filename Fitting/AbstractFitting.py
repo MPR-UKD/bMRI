@@ -15,10 +15,12 @@ class AbstractFitting(ABC):
         fit_function: Callable,
         boundary: Tuple[float, float] = None,
         fit_config: dict | None = None,
+        normalize: bool = False
     ):
         self.fit_function = fit_function
         self.bounds = boundary
         self.fit_config = fit_config
+        self.normalize = normalize
 
     def set_fit_config(self, fit_config):
         self.fit_config = fit_config
@@ -51,6 +53,7 @@ class AbstractFitting(ABC):
             fit_function=self.fit_function,
             bounds=self.bounds,
             config=self.fit_config,
+            normalize=self.normalize
         )
 
         # Create an iterator of arguments to pass to fit_pixel
@@ -85,6 +88,7 @@ def fit_pixel(
     fit_function: Callable,
     bounds: Tuple[float, float] = None,
     config: dict = None,
+    normalize: bool = False
 ) -> np.ndarray:
     """
     Fits a curve to the given data using the provided fit function.
@@ -99,6 +103,8 @@ def fit_pixel(
     Returns:
     - param: array of curve fit parameters
     """
+    if normalize:
+        y /= y.max()
     kwargs = {}
     if bounds is not None:
         kwargs["bounds"] = bounds
