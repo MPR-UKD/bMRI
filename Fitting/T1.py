@@ -7,9 +7,9 @@ from .AbstractFitting import *
 
 
 class InversionRecoveryT1(AbstractFitting, ABC):
-    def __init__(self, boundary: tuple):
+    def __init__(self, boundary: tuple, normalize: bool = False):
         super(InversionRecoveryT1, self).__init__(
-            inversion_recovery_t1, boundary=boundary
+            inversion_recovery_t1, boundary=boundary, normalize=normalize
         )
 
     def fit(
@@ -65,5 +65,6 @@ def get_ti(dcm_files: list):
     return order, x[order]
 
 
+@njit
 def inversion_recovery_t1(x: np.ndarray, S0: float, t1: float, offset: float):
-    return S0 * (1 - np.exp(-x / t1)) + offset
+    return S0 * (1 - 2 * np.exp(-x / t1)) + offset
