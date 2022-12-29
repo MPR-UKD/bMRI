@@ -23,23 +23,10 @@ def mono_exp(x: np.ndarray, S0: float, t2_t2star: float, offset: float) -> np.nd
 
 
 class T2_T2star(AbstractFitting):
-    def __init__(
-        self, dicom_path: Union[str, Path], dim: int, boundary: Tuple, fit_config: dict
-    ):
-        """
-        T2Star fitting class. Inherits from AbstractFitting class.
+    def __init__(self, dim: int, boundary: tuple | None = None, fit_config: dict | None = None, normalize: bool = False):
 
-        Parameters:
-        - dicom_path: path to the DICOM image or directory containing DICOM images
-        - dim: number of dimensions in the DICOM image (2 or 3)
-        - boundary: tuple of lower and upper bounds for the fit parameters
-        - fit_config: dictionary of additional fitting configuration options
-        """
-        self.dicom_path = dicom_path
+        super(T2_T2star, self).__init__(mono_exp, boundary=boundary, fit_config=fit_config, normalize=normalize)
         self.dim = dim
-
-        # Set the fit function to the provided t2star function
-        super().__init__(mono_exp, boundary=boundary, fit_config=fit_config)
 
     def fit(
         self,
@@ -49,18 +36,6 @@ class T2_T2star(AbstractFitting):
         pools: int = cpu_count(),
         min_r2: float = -np.inf,
     ) -> Tuple[np.ndarray, np.ndarray]:
-        """
-        Fit the T2* relaxation time for the given DICOM image data.
-
-        Parameters:
-        - dicom: 3D or 4D array of DICOM image data
-        - mask: 2D or 3D array of mask indicating which pixels to include in the fit
-        - min_r2: minimum R^2 value for a fit to be considered valid
-
-        Returns:
-        - fit_maps: 3D or 4D array of fitted T2* values
-        - r2_map: 2D or 3D array of R^2 values for each fit
-        """
 
         # Call the fit method from the parent class using the provided dicom, mask, and x data
         fit_maps, r2_map = super().fit(dicom, mask, x, pools=pools, min_r2=min_r2)
