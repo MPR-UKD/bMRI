@@ -26,7 +26,7 @@ def test():
     tempdir = tempfile.TemporaryDirectory()
     save_results(f_t1rho, fit_map, r2, mask,
                  affine=np.eye(4), header=None, nii_folder=tempdir.name,
-                 result_folder=tempdir.name, decimal=',')
+                 results_path=tempdir.name, decimal=',')
 
     for _ in ['offset.csv', 'offset_map.nii.gz', 'params.nii.gz', 'r2.nii.gz', 'S0.csv', 'S0_map.nii.gz', 't1rho.csv',
               't1rho_map.nii.gz']:
