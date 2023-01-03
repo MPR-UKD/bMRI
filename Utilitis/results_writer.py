@@ -6,27 +6,30 @@ from typing import Callable
 from Utilitis.utils import get_function_parameter
 
 def save_results(
-    function: Callable,
+    function: Callable | None,
     fit_map: np.ndarray | None,
     r2: np.ndarray | None,
     mask: np.ndarray | None,
     affine: np.ndarray,
     header: np.ndarray | None,
     nii_folder: str | Path,
-    result_folder: str | Path,
+    results_path: str | Path,
     decimal: str = ",",
 ):
     nii_folder = Path(nii_folder)
-    result_folder = Path(result_folder)
+    results_path = Path(results_path)
     nii_folder.mkdir(parents=True, exist_ok=True)
-    result_folder.mkdir(parents=True, exist_ok=True)
-    parameters = get_function_parameter(function)
+    results_path.parent.mkdir(parents=True, exist_ok=True)
 
     if r2 is not None:
         save_nii(r2, affine, header, nii_folder / "r2.nii.gz")
 
     save_nii(fit_map, affine, header, nii_folder / "params.nii.gz")
 
+    if function is not None:
+        parameters = get_function_parameter(function)
+    else:
+        parameters = ''
     for ii, parameter in enumerate(parameters):
         save_nii(fit_map[ii], affine, header, nii_folder / f"{parameter}_map.nii.gz")
         results = {}
@@ -46,7 +49,7 @@ def save_results(
                 "%.2f" % len(times[~np.isnan(times)]) + "/" + "%.2f" % np.sum(m),
                 "%.2f" % np.nanmean(r2[m == 1]) if r2 is not None else "NaN",
             ]
-        with open(result_folder / f'{parameter}.csv', mode="w", newline="") as csv_file:
+        with open(results_path.as_posix() + f'_{parameter}.csv', mode="w", newline="") as csv_file:
             writer = csv.writer(csv_file, delimiter=";")
             writer.writerow(
                 ["mask_index", "mean", "std", "min", "max", "Pixels", "Mean R^2"]
@@ -58,5 +61,5 @@ def save_results(
 
 
 def save_nii(nii: np.ndarray, affine, header, file: Path):
-    nii = nii.astype(np.uint16)
+    nii = nii.astype('uint16')
     nib.save(nib.Nifti1Image(nii, affine=affine, header=header), file)
