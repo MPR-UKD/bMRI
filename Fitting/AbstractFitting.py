@@ -11,11 +11,11 @@ from itertools import repeat
 
 class AbstractFitting(ABC):
     def __init__(
-        self,
-        fit_function: Callable,
-        boundary: Tuple[float, float] = None,
-        fit_config: dict | None = None,
-        normalize: bool = False
+            self,
+            fit_function: Callable,
+            boundary: Tuple[float, float] = None,
+            fit_config: dict | None = None,
+            normalize: bool = False
     ):
         self.fit_function = fit_function
         self.bounds = boundary
@@ -26,13 +26,14 @@ class AbstractFitting(ABC):
         self.fit_config = fit_config
 
     def fit(
-        self,
-        dicom: np.ndarray,
-        mask: np.ndarray,
-        x: np.ndarray,
-        pools: int = cpu_count(),
-        min_r2: float = -np.inf,
+            self,
+            dicom: np.ndarray,
+            mask: np.ndarray,
+            x: np.ndarray,
+            pools: int = cpu_count(),
+            min_r2: float = -np.inf,
     ):
+        dicom = dicom.astype('float64')
         assert len(mask.shape) == len(dicom.shape) - 1
         if len(mask.shape) == 2:
             # Change size of dicom and mask to 3D
@@ -63,32 +64,35 @@ class AbstractFitting(ABC):
         )
 
         # Use a Pool to fit the pixels in parallel
-        with Pool(pools) as pool:
-            # Call fit_pixel for each pixel and store the result in a list
-            pixel_results = pool.starmap(fit_pixel_fixed, pixel_args)
+        if pools != 0:
+            with Pool(pools) as pool:
+                # Call fit_pixel for each pixel and store the result in a list
+                pixel_results = pool.starmap(fit_pixel_fixed, pixel_args)
+        else:
+            pixel_results = [fit_pixel_fixed(*p) for p in pixel_args]
 
-            # Iterate through the list of results and store the fitting parameters and r2 values in the appropriate
-            # positions in the fit_maps and r2_map arrays
-            for i, j, k, param in zip(*np.nonzero(mask), pixel_results):
-                if param is None:
-                    continue
-                r2_map[i, j, k] = calculate_r2(
-                    dicom[:, i, j, k], self.fit_function, param, x, self.normalize
-                )
-                if r2_map[i, j, k] > min_r2:
-                    for p_num, p in enumerate(param):
-                        fit_maps[p_num][i, j, k] = p
+        # Iterate through the list of results and store the fitting parameters and r2 values in the appropriate
+        # positions in the fit_maps and r2_map arrays
+        for i, j, k, param in zip(*np.nonzero(mask), pixel_results):
+            if param is None:
+                continue
+            r2_map[i, j, k] = calculate_r2(
+                dicom[:, i, j, k], self.fit_function, param, x, self.normalize
+            )
+            if r2_map[i, j, k] > min_r2:
+                for p_num, p in enumerate(param):
+                    fit_maps[p_num][i, j, k] = p
 
         return np.array(fit_maps), r2_map
 
 
 def fit_pixel(
-    y: np.ndarray,
-    x: np.ndarray,
-    fit_function: Callable,
-    bounds: Tuple[float, float] = None,
-    config: dict = None,
-    normalize: bool = False
+        y: np.ndarray,
+        x: np.ndarray,
+        fit_function: Callable,
+        bounds: Tuple[float, float] = None,
+        config: dict = None,
+        normalize: bool = False
 ) -> np.ndarray:
     """
     Fits a curve to the given data using the provided fit function.
@@ -119,7 +123,7 @@ def fit_pixel(
 
 
 def calculate_r2(
-    y: np.ndarray, fit_function: Callable, param: np.ndarray, x: np.ndarray, normalize: bool = False
+        y: np.ndarray, fit_function: Callable, param: np.ndarray, x: np.ndarray, normalize: bool = False
 ) -> float:
     if normalize:
         y /= y.max()
@@ -129,6 +133,6 @@ def calculate_r2(
 
 @njit
 def get_r2(residuals: np.ndarray, y: np.ndarray) -> float:
-    ss_res = np.sum(residuals**2)
+    ss_res = np.sum(residuals ** 2)
     ss_tot = np.sum((y - np.mean(y)) ** 2)
     return 1 - (ss_res / ss_tot)
