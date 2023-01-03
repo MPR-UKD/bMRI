@@ -140,7 +140,7 @@ class ImageViewer(QMainWindow):
             pixel_params = self.current_params[:, y, x]
         except IndexError:
             return None
-        raw_data = self.dicom[:, y, x, self.current_slice]
+        raw_data = self.dicom[:, y, x, self.current_slice].astype('float64')
         if self.norm:
             raw_data /= raw_data.max()
         self.fit_function_widget.update_plot(pixel_params, raw_data)
