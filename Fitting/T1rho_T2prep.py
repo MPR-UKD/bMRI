@@ -50,12 +50,12 @@ class T1rho_T2prep(AbstractFitting):
         self.dim = dim
 
     def fit(
-        self,
-        dicom: np.ndarray,
-        mask: np.ndarray,
-        x: np.ndarray,
-        pools: int = cpu_count(),
-        min_r2: float = -np.inf,
+            self,
+            dicom: np.ndarray,
+            mask: np.ndarray,
+            x: np.ndarray,
+            pools: int = cpu_count(),
+            min_r2: float = -np.inf,
     ) -> Tuple[np.ndarray, np.ndarray]:
         """
         Fit the T2* relaxation time for the given DICOM image data.
@@ -74,7 +74,6 @@ class T1rho_T2prep(AbstractFitting):
         fit_maps, r2_map = super().fit(dicom, mask, x, pools=pools, min_r2=min_r2)
 
         return fit_maps, r2_map
-
 
     def get_TSL(self, first_SL: int = 10, inc_SL: int = 30, n: int = 4) -> np.ndarray:
         x = [0, 2 * first_SL]
