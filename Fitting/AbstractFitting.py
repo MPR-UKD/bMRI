@@ -45,7 +45,7 @@ class AbstractFitting(ABC):
 
         # Init fit_maps list - Each fit_map is a 3D array and stores the result of the fitting parameter (order
         # similar to the fit function)
-        fit_maps = np.empty((num_params, *mask.shape))
+        fit_maps = np.full((num_params, *mask.shape), np.nan)
         r2_map = np.zeros(mask.shape)
 
         # Create a partial function with the fixed arguments for fit_pixel
@@ -128,7 +128,10 @@ def calculate_r2(
     if normalize:
         y /= y.max()
     residuals = y - fit_function(x, *param)
-    return get_r2(residuals, y)
+    try:
+        return get_r2(residuals, y)
+    except:
+        return 0
 
 
 @njit
