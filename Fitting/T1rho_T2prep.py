@@ -22,17 +22,17 @@ def fit_T1rho_wrapper_raush(TR: float, T1: float, alpha: float):
 # https://doi.org/10.1016/S0730-725X(99)00041-7
 # Appendix
 def fit_T1rho_wrapper_aronen(
-    TR: float, T1: float, alpha: float, TE: float, T2star: float
+        TR: float, T1: float, alpha: float, TE: float, T2star: float
 ):
     @njit
     def fit(x: np.ndarray, S0: float, t1rho: float, offset: float) -> np.ndarray:
         tau = TR - x
         counter = (
-            S0
-            * np.exp(-x / t1rho)
-            * (1 - np.exp(-tau / T1))
-            * np.sin(alpha)
-            * np.exp(-TE / T2star)
+                S0
+                * np.exp(-x / t1rho)
+                * (1 - np.exp(-tau / T1))
+                * np.sin(alpha)
+                * np.exp(-TE / T2star)
         )
         denominator = 1 - np.cos(alpha) * np.exp(-tau / T1) * np.exp(-x / t1rho)
         return counter / denominator + offset
