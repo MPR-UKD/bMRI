@@ -14,8 +14,10 @@ def save_results(
     header: np.ndarray | None,
     nii_folder: str | Path,
     results_path: str | Path,
+    return_params: list | None = None,
     decimal: str = ",",
 ):
+    return_list = []
     nii_folder = Path(nii_folder)
     results_path = Path(results_path)
     nii_folder.mkdir(parents=True, exist_ok=True)
@@ -58,6 +60,9 @@ def save_results(
             for key, value in results.items():
                 value = [v.replace(".", decimal) for v in value]
                 writer.writerow([key] + value)
+        if parameter in return_params:
+            return_list.append(results)
+    return return_list if len(return_list) != 0 else None
 
 
 

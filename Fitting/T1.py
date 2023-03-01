@@ -7,7 +7,7 @@ from .AbstractFitting import *
 
 
 class InversionRecoveryT1(AbstractFitting, ABC):
-    def __init__(self, boundary: tuple, normalize: bool = False):
+    def __init__(self, boundary: tuple | None = None, normalize: bool = False):
         super(InversionRecoveryT1, self).__init__(
             inversion_recovery_t1, boundary=boundary, normalize=normalize
         )
