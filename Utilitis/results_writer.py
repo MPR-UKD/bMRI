@@ -60,7 +60,9 @@ def save_results(
             for key, value in results.items():
                 value = [v.replace(".", decimal) for v in value]
                 writer.writerow([key] + value)
-        if parameter in return_params:
+        if return_params is None:
+            return_list.append(results)
+        elif parameter in return_params:
             return_list.append(results)
     return return_list if len(return_list) != 0 else None
 
