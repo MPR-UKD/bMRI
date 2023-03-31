@@ -6,68 +6,36 @@ import numpy as np
 
 
 class Overlay:
-    def __init__(self, dcm_array, map_file, mask_file):
-        self.mask = load_nii(mask_file).array[:, :, ::-1]
-        self.map = load_nii(map_file).array
-        self.dcm = dcm_array
+    def __init__(self,
+                 dcm_array: np.ndarray | Path,
+                 map_array: np.ndarray | Path,
+                 mask_arry: np.ndarray | Path,
+                 min = 0,
+                 max = 200):
+        self.dcm = dcm_array if type(dcm_array) == np.ndarray else load_nii(dcm_array).array
+        self.map = map_array if type(map_array) == np.ndarray else load_nii(map_array).array
+        self.mask = mask_arry if type(mask_arry) == np.ndarray else load_nii(mask_arry).array
+        self.dcm = self.dcm[0]
+        self.map = self.map[1]
+        self.map[self.mask == 0] = np.nan
+        self.min = min
+        self.max = max
+        self.label = "T$_{2}$ [ms]"
 
-    def get_img(self, slice_nr):
-        dcm = self.dcm[:, :, slice_nr]
-        mask = self.mask[:, :, slice_nr]
-        f_map = self.map[:, :, slice_nr]
-        f_map[mask == 0] = np.nan
-        plt.imshow(np.rot90(dcm[160:350, 180:370], 3), cmap="gray")
+    def overlay_img(self, slice_idx, file_name):
+        dcm = np.rot90(self.dcm[:, :, slice_idx], 3)
+        f_map = np.rot90(self.map[:, :, slice_idx], 3)
+        plt.imshow(dcm, cmap="gray")
         plt.imshow(
-            np.rot90(f_map[160:350, 180:370], 3),
+            f_map,
             cmap="jet",
             alpha=0.75,
-            vmax=25,
-            vmin=0,
+            vmax=self.max,
+            vmin=self.min,
         )
         plt.axis("off")
         c_bar = plt.colorbar()
-        c_bar.set_label("T$_{2}^{*}$ [ms]", fontsize=22)
-        plt.savefig(r"F:\Projekt_Schweineknie\img.png", dpi=1200)
+        c_bar.set_label(self.label, fontsize=22)
 
-    def get_most_pixel(self):
-        count = []
-        for slice in range(self.mask.shape[-1]):
-            temp = self.mask[:, :, slice]
-            count.append(len(temp[temp != 0]))
-        return np.argmax(count)
-
-    def get_mid_slice(self):
-        count = []
-        for slice in range(self.mask.shape[-1]):
-            temp = self.mask[:, :, slice]
-            count.append(len(temp[temp != 0]))
-        return round(np.median(np.argwhere(np.array(count) != 0)))
-
-    def get_most_pixel_near_mid(self, c):
-        mid = self.get_mid_slice()
-        count = []
-        for slice in range(self.mask.shape[-1]):
-            if abs(mid - slice) > c:
-                count.append(0)
-                continue
-            temp = self.mask[:, :, slice]
-            count.append(len(temp[temp != 0]))
-        return np.argmax(count)
-
-
-if __name__ == "__main__":
-    knee_nr = 22  # 4
-    folder = [
-        _
-        for _ in Path(r"F:\Projekt_Schweineknie\Daten").glob(
-            f"*{knee_nr}*\*\*T2-star_map_*"
-        )
-    ][0]
-    t2 = T2_T2star(dim=3, boundary=None)
-    dicom, x = t2.read_data(folder)
-    overlay = Overlay(
-        dcm_array=dicom[0],
-        map_file=folder / "map.nii.gz",
-        mask_file=folder / "mask.nii.gz",
-    )
-    overlay.get_img(overlay.get_most_pixel_near_mid(5))
+        plt.savefig(file_name, dpi=1200)
+        plt.close()
