@@ -1,16 +1,24 @@
 from pathlib import Path
-
-from Fitting.AbstractFitting import *
+from typing import Union, Tuple, Dict
+import numpy as np
+from numba import njit
+from Fitting.AbstractFitting import AbstractFitting
 from Utilitis.read import get_dcm_list, get_dcm_array, split_dcm_list
-import inspect
-
-
-# Assessment of T1, T1ρ, and T2 values of the ulnocarpal disc in healthy subjects at 3 tesla
-# DOI: 10.1016/j.mri.2014.05.010
-# Eq. 4
 
 
 def fit_T1rho_wrapper_raush(TR: float, T1: float, alpha: float):
+    """
+    Creates a T1rho fitting function based on Rausch et al.
+
+    Parameters:
+    - TR: Repetition time in MRI sequence
+    - T1: Longitudinal relaxation time
+    - alpha: Flip angle
+
+    Returns:
+    - fit function
+    """
+
     def fit(x: np.ndarray, S0: float, t1rho: float, offset: float) -> np.ndarray:
         counter = (1 - np.exp(-(TR - x) / T1)) * np.exp(-x / t1rho)
         denominator = 1 - np.cos(alpha) * np.exp(-x / t1rho) * np.exp(-(TR - x) / T1)
@@ -19,12 +27,23 @@ def fit_T1rho_wrapper_raush(TR: float, T1: float, alpha: float):
     return fit
 
 
-# 3D SPIN-LOCK IMAGING OF HUMAN GLIOMAS
-# https://doi.org/10.1016/S0730-725X(99)00041-7
-# Appendix
 def fit_T1rho_wrapper_aronen(
         TR: float, T1: float, alpha: float, TE: float, T2star: float
 ):
+    """
+    Creates a T1rho fitting function based on Aronen et al.
+
+    Parameters:
+    - TR: Repetition time in MRI sequence
+    - T1: Longitudinal relaxation time
+    - alpha: Flip angle
+    - TE: Echo time
+    - T2star: Transverse relaxation time
+
+    Returns:
+    - fit function
+    """
+
     @njit
     def fit(x: np.ndarray, S0: float, t1rho: float, offset: float) -> np.ndarray:
         tau = TR - x
@@ -40,53 +59,53 @@ def fit_T1rho_wrapper_aronen(
 
     return fit
 
+
 def fit_mono_exp_wrapper():
+    """
+    Creates a mono-exponential fitting function.
+
+    Returns:
+    - fit function
+    """
+
     @njit
     def mono_exp(x: np.ndarray, S0: float, t1rho: float, offset: float) -> np.ndarray:
-        """
-        Fit function for T2* relaxation time.
-
-        Parameters:
-        - x: 1D array of echo times
-        - S0: initial signal intensity
-        - t2_t2star: T2* relaxation time
-        - offset: constant offset to add to the fit curve
-
-        Returns:
-        - fit: 1D array of fitted signal intensities at the given echo times
-        """
         return S0 * np.exp(-x / t1rho) + offset
-    return mono_exp
-def fit_T2_wrapper_aronen(
-        TR: float, T1: float, alpha: float, TE: float, T2star: float
-):
-    @njit
-    def fit(x: np.ndarray, S0: float, t2: float, offset: float) -> np.ndarray:
-        tau = TR - x
-        counter = (
-                S0
-                * np.exp(-x / t2)
-                * (1 - np.exp(-tau / T1))
-                * np.sin(alpha)
-                * np.exp(-TE / T2star)
-        )
-        denominator = 1 - np.cos(alpha) * np.exp(-tau / T1) * np.exp(-x / t2)
-        return counter / denominator + offset
 
-    return fit
+    return mono_exp
+
 
 class T1rho_T2prep(AbstractFitting):
-    def __init__(self, dim: int, config: dict, boundary: tuple | None = None, normalize: bool = False, mode_T2: bool = False):
-        # fit = fit_T1rho_wrapper_raush(config["TR"], config["T1"], config["alpha"])
-        if not mode_T2:
-            fit = fit_T1rho_wrapper_aronen(
-                config["TR"], config["T1"], config["alpha"], config["TE"], config["T2star"]
-            )
+    def __init__(
+            self,
+            dim: int,
+            config: Union[Dict, None] = None,
+            boundary: Union[Tuple, None] = None,
+            normalize: bool = False,
+            mode_T2: bool = False
+    ):
+        """
+        Initializes T1rho_T2prep object for fitting T1rho and T2 in MRI data.
+
+        Parameters:
+        - dim: Dimension of the MRI data (2 or 3)
+        - config: Configuration dictionary with MRI sequence parameters
+        - boundary: Tuple representing the boundary conditions
+        - normalize: Whether to normalize the data
+        - mode_T2: If True, fitting is done for T2 instead of T1rho
+        """
+
+        if config is not None:
+            if not mode_T2:
+                fit = fit_T1rho_wrapper_aronen(
+                    config["TR"], config["T1"], config["alpha"], config["TE"], config["T2star"]
+                )
+            else:
+                fit = fit_T2_wrapper_aronen(
+                    config["TR"], config["T1"], config["alpha"], config["TE"], config["T2star"]
+                )
         else:
-            fit = fit_T2_wrapper_aronen(
-                config["TR"], config["T1"], config["alpha"], config["TE"], config["T2star"]
-            )
-        #Tfit = fit_mono_exp_wrapper()
+            fit = None
 
         super(T1rho_T2prep, self).__init__(fit, boundary=boundary, normalize=normalize)
         self.dim = dim
@@ -100,15 +119,17 @@ class T1rho_T2prep(AbstractFitting):
             min_r2: float = -np.inf,
     ) -> Tuple[np.ndarray, np.ndarray]:
         """
-        Fit the T2* relaxation time for the given DICOM image data.
+        Fit the T1rho or T2 relaxation time for the given DICOM image data.
 
         Parameters:
         - dicom: 3D or 4D array of DICOM image data
         - mask: 2D or 3D array of mask indicating which pixels to include in the fit
+        - x: Array of independent variable data
+        - pools: Number of parallel pools for computation
         - min_r2: minimum R^2 value for a fit to be considered valid
 
         Returns:
-        - fit_maps: 3D or 4D array of fitted T2* values
+        - fit_maps: 3D or 4D array of fitted T1rho or T2 values
         - r2_map: 2D or 3D array of R^2 values for each fit
         """
 
@@ -118,13 +139,33 @@ class T1rho_T2prep(AbstractFitting):
         return fit_maps, r2_map
 
     def get_TSL(self, first_SL: int = 10, inc_SL: int = 30, n: int = 4) -> np.ndarray:
+        """
+        Generate an array of spin-lock times (TSL).
+
+        Parameters:
+        - first_SL: First spin-lock time
+        - inc_SL: Increment in spin-lock time
+        - n: Number of spin-lock times
+
+        Returns:
+        - Array of spin-lock times
+        """
         x = [0, 2 * first_SL]
         for _ in range(1, n - 1):
             x.append(x[-1] + 2 * inc_SL)
         return x
 
-    def read_data(self, folder: str | Path):
+    def read_data(self, folder: Union[str, Path]) -> Tuple[np.ndarray, None]:
+        """
+        Reads DICOM data from the specified folder.
 
+        Parameters:
+        - folder: Path to the folder containing DICOM files
+
+        Returns:
+        - dicom: 3D or 4D array of DICOM image data
+        - None
+        """
         folder = Path(folder)
         if self.dim == 2:
             dcm_files = get_dcm_list(folder)
