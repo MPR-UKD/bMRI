@@ -1,7 +1,6 @@
 from abc import ABC
 from multiprocessing import Pool, cpu_count
-from typing import Callable, Tuple
-
+from typing import Callable, Tuple, Optional, List, Union, Any
 import numpy as np
 from numba import njit
 from scipy.optimize import curve_fit
@@ -14,15 +13,30 @@ class AbstractFitting(ABC):
             self,
             fit_function: Callable,
             boundary: Tuple[float, float] = None,
-            fit_config: dict | None = None,
+            fit_config: Optional[dict] = None,
             normalize: bool = False
-    ):
+    ) -> None:
+        """
+        Initializes the AbstractFitting object.
+
+        Parameters:
+        - fit_function (Callable): The function used for fitting
+        - boundary (Tuple[float, float], optional): Boundary for the parameters during fitting
+        - fit_config (dict, optional): Additional configuration for the fit function
+        - normalize (bool, optional): Normalize the data before fitting (default is False)
+        """
         self.fit_function = fit_function
         self.bounds = boundary
         self.fit_config = fit_config
         self.normalize = normalize
 
-    def set_fit_config(self, fit_config):
+    def set_fit_config(self, fit_config: dict) -> None:
+        """
+        Set the fit configuration.
+
+        Parameters:
+        - fit_config (dict): Configuration for the fit function
+        """
         self.fit_config = fit_config
 
     def fit(
@@ -32,7 +46,20 @@ class AbstractFitting(ABC):
             x: np.ndarray,
             pools: int = cpu_count(),
             min_r2: float = -np.inf,
-    ):
+    ) -> Tuple[np.ndarray, np.ndarray]:
+        """
+        Fit the given data using parallel processing.
+
+        Parameters:
+        - dicom (np.ndarray): The input data
+        - mask (np.ndarray): The mask array
+        - x (np.ndarray): Independent variable data
+        - pools (int, optional): Number of parallel processes to use (default is the number of CPUs)
+        - min_r2 (float, optional): Minimum R squared value to consider (default is negative infinity)
+
+        Returns:
+        - Tuple[np.ndarray, np.ndarray]: Arrays of fit parameters and R squared values
+        """
         dicom = dicom.astype('float64')
         assert len(mask.shape) == len(dicom.shape) - 1
         if len(mask.shape) == 2:
@@ -43,8 +70,7 @@ class AbstractFitting(ABC):
         # Get the number of parameters in the fit function
         num_params = len(curve_fit(self.fit_function, x, dicom[:, 0, 0, 0])[0])
 
-        # Init fit_maps list - Each fit_map is a 3D array and stores the result of the fitting parameter (order
-        # similar to the fit function)
+        # Initialize fit_maps list
         fit_maps = np.full((num_params, *mask.shape), np.nan)
         r2_map = np.zeros(mask.shape)
 
@@ -71,8 +97,7 @@ class AbstractFitting(ABC):
         else:
             pixel_results = [fit_pixel_fixed(*p) for p in pixel_args]
 
-        # Iterate through the list of results and store the fitting parameters and r2 values in the appropriate
-        # positions in the fit_maps and r2_map arrays
+        # Store fitting parameters and r2 values in appropriate arrays
         for i, j, k, param in zip(*np.nonzero(mask), pixel_results):
             if param is None:
                 continue
@@ -90,22 +115,23 @@ def fit_pixel(
         y: np.ndarray,
         x: np.ndarray,
         fit_function: Callable,
-        bounds: Tuple[float, float] = None,
-        config: dict = None,
+        bounds: Optional[Tuple[float, float]] = None,
+        config: Optional[dict] = None,
         normalize: bool = False
-) -> np.ndarray:
+) -> Union[np.ndarray, None]:
     """
     Fits a curve to the given data using the provided fit function.
 
     Parameters:
-    - y: 1D array of dependent variable data
-    - x: 1D array of independent variable data
-    - fit_function: function to use for fitting the curve
-    - bounds: optional bounds for the curve fit parameters
-    - config: optional config dictionary for curve_fit function
+    - y (np.ndarray): 1D array of dependent variable data
+    - x (np.ndarray): 1D array of independent variable data
+    - fit_function (Callable): function to use for fitting the curve
+    - bounds (Tuple[float, float], optional): optional bounds for the curve fit parameters
+    - config (dict, optional): optional config dictionary for curve_fit function
+    - normalize (bool, optional): normalize the data before fitting (default is False)
 
     Returns:
-    - param: array of curve fit parameters
+    - np.ndarray, None: array of curve fit parameters or None if fitting fails
     """
     if normalize:
         y /= y.max()
@@ -113,29 +139,52 @@ def fit_pixel(
     if bounds is not None:
         kwargs["bounds"] = bounds
     if config is not None:
-        for key in config:
-            kwargs[key] = config[key]
+        kwargs.update(config)
     try:
-        param, param_cov = curve_fit(fit_function, x, y, **kwargs)
+        param, _ = curve_fit(fit_function, x, y, **kwargs)
     except (RuntimeError, ValueError):
         param = None
     return param
 
 
 def calculate_r2(
-        y: np.ndarray, fit_function: Callable, param: np.ndarray, x: np.ndarray, normalize: bool = False
+        y: np.ndarray,
+        fit_function: Callable,
+        param: np.ndarray,
+        x: np.ndarray,
+        normalize: bool = False
 ) -> float:
+    """
+    Calculate the R squared value of the fitted curve.
+
+    Parameters:
+    - y (np.ndarray): 1D array of dependent variable data
+    - fit_function (Callable): function used for fitting the curve
+    - param (np.ndarray): array of curve fit parameters
+    - x (np.ndarray): 1D array of independent variable data
+    - normalize (bool, optional): normalize the data before calculation (default is False)
+
+    Returns:
+    - float: R squared value
+    """
     if normalize:
         y /= y.max()
     residuals = y - fit_function(x, *param)
-    try:
-        return get_r2(residuals, y)
-    except:
-        return 0
+    return get_r2(residuals, y)
 
 
 @njit
 def get_r2(residuals: np.ndarray, y: np.ndarray) -> float:
+    """
+    Compute the R squared value from the residuals and dependent variable data.
+
+    Parameters:
+    - residuals (np.ndarray): Residuals of the fit
+    - y (np.ndarray): 1D array of dependent variable data
+
+    Returns:
+    - float: R squared value
+    """
     ss_res = np.sum(residuals ** 2)
     ss_tot = np.sum((y - np.mean(y)) ** 2)
     return 1 - (ss_res / ss_tot)
