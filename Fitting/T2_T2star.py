@@ -1,9 +1,9 @@
-from typing import Union
-
+from typing import Union, List, Tuple
+import numpy as np
 import pydicom
 from pathlib import Path
 from Utilitis.read import get_dcm_list, get_dcm_array, split_dcm_list
-from .AbstractFitting import *
+from .AbstractFitting import AbstractFitting
 
 
 def mono_exp(x: np.ndarray, S0: float, t2_t2star: float, offset: float) -> np.ndarray:
@@ -23,27 +23,57 @@ def mono_exp(x: np.ndarray, S0: float, t2_t2star: float, offset: float) -> np.nd
 
 
 class T2_T2star(AbstractFitting):
-    def __init__(self, dim: int, boundary: tuple | None = None, fit_config: dict | None = None, normalize: bool = False):
+    def __init__(self, dim: int, boundary: Union[tuple, None] = None, fit_config: Union[dict, None] = None,
+                 normalize: bool = False):
+        """
+        Initialize T2_T2star object.
 
+        Parameters:
+        - dim: Dimensionality of the data (2 or 3)
+        - boundary: Tuple representing boundary conditions (optional)
+        - fit_config: Configuration for the fitting (optional)
+        - normalize: Boolean indicating whether to normalize the data
+        """
         super(T2_T2star, self).__init__(mono_exp, boundary=boundary, fit_config=fit_config, normalize=normalize)
         self.dim = dim
 
     def fit(
-        self,
-        dicom: np.ndarray,
-        mask: np.ndarray,
-        x: np.ndarray,
-        pools: int = cpu_count(),
-        min_r2: float = -np.inf,
+            self,
+            dicom: np.ndarray,
+            mask: np.ndarray,
+            x: np.ndarray,
+            pools: int = cpu_count(),
+            min_r2: float = -np.inf,
     ) -> Tuple[np.ndarray, np.ndarray]:
+        """
+        Fit the T2* relaxation time for the given DICOM image data.
 
-        # Call the fit method from the parent class using the provided dicom, mask, and x data
+        Parameters:
+        - dicom: 3D or 4D array of DICOM image data
+        - mask: 2D or 3D array of mask indicating which pixels to include in the fit
+        - x: Array of independent variable data
+        - pools: Number of parallel pools for computation (optional)
+        - min_r2: minimum R^2 value for a fit to be considered valid (optional)
+
+        Returns:
+        - fit_maps: 3D or 4D array of fitted T2* values
+        - r2_map: 2D or 3D array of R^2 values for each fit
+        """
         fit_maps, r2_map = super().fit(dicom, mask, x, pools=pools, min_r2=min_r2)
-
         return fit_maps, r2_map
 
-    def read_data(self, folder: str | Path):
+    def read_data(self, folder: Union[str, Path]) -> Tuple[np.ndarray, np.ndarray]:
+        """
+        Reads DICOM data from the specified folder.
 
+        Parameters:
+        - folder: Path to the folder containing DICOM files
+
+        Returns:
+        - dicom: 3D or 4D array of DICOM image data
+        - TEs: Array of echo times
+        """
+        folder = Path(folder)
         if self.dim == 2:
             dcm_files = get_dcm_list(folder)
             dcm_files = [[dcm] for dcm in dcm_files]
@@ -58,14 +88,23 @@ class T2_T2star(AbstractFitting):
             TEs, order = get_tes(dcm_files)
         else:
             raise NotImplementedError
+
         # echos, z, x, y --> echos, x, y, z
-        dicom = np.array([get_dcm_array(dcm_files[o]) for o in order]).transpose(
-            0, 3, 2, 1
-        )
+        dicom = np.array([get_dcm_array(dcm_files[o]) for o in order]).transpose(0, 3, 2, 1)
         return dicom, TEs
 
 
-def get_tes(dcm_files: list):
+def get_tes(dcm_files: List[List[str]]) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Extracts and sorts the echo times from DICOM files.
+
+    Parameters:
+    - dcm_files: List of lists of DICOM file paths
+
+    Returns:
+    - tes: Sorted array of echo times
+    - order: Indices that would sort the echo times
+    """
     TEs = []
     for dcm in dcm_files:
         info = pydicom.dcmread(dcm[0])
