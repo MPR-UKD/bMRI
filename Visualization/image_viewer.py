@@ -1,29 +1,43 @@
 import sys
 
-import PIL.Image
-from matplotlib.cm import get_cmap
-from scipy import ndimage
 import numpy as np
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QImage, QPixmap, QPainter
-from PyQt5.QtWidgets import (
-    QApplication,
-    QMainWindow,
-    QLabel,
-    QWidget,
-    QSlider,
-    QHBoxLayout,
-)
+from PyQt5.QtGui import QImage, QPixmap
+from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel, QWidget, QSlider, QHBoxLayout
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.cm import get_cmap
 from matplotlib.figure import Figure
+from scipy import ndimage
 
 
-def calc_scaling_factor(dicom_shape):
+def calc_scaling_factor(dicom_shape: tuple[int, int, int]) -> int:
+    """
+    Calculate scaling factor based on DICOM shape.
+
+    :param dicom_shape: Shape of the DICOM data.
+    :return: Scaling factor.
+    """
     return 1000 // max(dicom_shape[1], dicom_shape[2])
 
 
 class ImageViewer(QMainWindow):
-    def __init__(self, dicom, fit_maps, fit_function, time_points, c_int: int | None = None, alpha: float = 0.3, normalize: bool = True):
+    """
+    ImageViewer class to visualize DICOM data and fitted maps.
+    """
+
+    def __init__(self, dicom: np.ndarray, fit_maps: np.ndarray, fit_function: callable,
+                 time_points: list[int], c_int: int | None = None, alpha: float = 0.3, normalize: bool = True):
+        """
+        Initialize the ImageViewer.
+
+        :param dicom: DICOM data array.
+        :param fit_maps: Array of fitted maps.
+        :param fit_function: Fitting function.
+        :param time_points: List of time points.
+        :param c_int: Color intensity index, optional.
+        :param alpha: Alpha value for overlay, optional.
+        :param normalize: Flag to normalize data, optional.
+        """
         super(ImageViewer, self).__init__()
 
         self.echo_time = 0
@@ -77,14 +91,20 @@ class ImageViewer(QMainWindow):
         central_widget.setLayout(main_layout)
         self.setCentralWidget(central_widget)
 
-    def change_slice(self, slice_num):
+    def change_slice(self, slice_num: int):
+        """
+        Change displayed slice.
+
+        :param slice_num: Slice number to display.
+        """
         self.current_slice = slice_num
         self.current_params = self.fit_maps[:, :, :, self.current_slice]
         self.display_slice()
 
-    from scipy import ndimage
-
     def display_slice(self):
+        """
+        Display the current slice.
+        """
         # Get the size of the widget
         size = self.image_label.size()
 
@@ -126,6 +146,9 @@ class ImageViewer(QMainWindow):
         self.image_label.setPixmap(pixmap)
 
     def init_fit_function(self):
+        """
+        Initialize the fit function plot.
+        """
         self.fit_function_widget = FitFunctionWidget(
             [np.NAN] * len(self.time_points), self.fit_function,
             [np.NAN] * len(self.current_params[:, 0, 0]),
@@ -134,6 +157,11 @@ class ImageViewer(QMainWindow):
         self.plot_container.layout().addWidget(self.fit_function_widget)
 
     def update_fit_function(self, event):
+        """
+        Update the fit function plot based on an event.
+
+        :param event: The triggered event.
+        """
         x = event.pos().x() // self.scaling_factor
         y = event.pos().y() // self.scaling_factor
         try:
@@ -145,8 +173,23 @@ class ImageViewer(QMainWindow):
             raw_data /= raw_data.max()
         self.fit_function_widget.update_plot(pixel_params, raw_data)
 
+
 class FitFunctionWidget(QWidget):
-    def __init__(self, raw_data, fit_function, params, time_points, parent=None):
+    """
+    Widget for displaying the fitting function.
+    """
+
+    def __init__(self, raw_data: list[float], fit_function: callable, params: list[float],
+                 time_points: list[int], parent: QWidget = None):
+        """
+        Initialize the FitFunctionWidget.
+
+        :param raw_data: List of raw data points.
+        :param fit_function: Fitting function.
+        :param params: List of parameters for the fitting function.
+        :param time_points: List of time points.
+        :param parent: Parent widget, optional.
+        """
         super().__init__(parent)
         self.y_raw = raw_data
         self.fit_function = fit_function
@@ -172,6 +215,12 @@ class FitFunctionWidget(QWidget):
         self.setLayout(layout)
 
     def update_plot(self, params=None, raw_data=None):
+        """
+        Update the plot with new parameters or raw data.
+
+        :param params: List of new parameters, optional.
+        :param raw_data: List of new raw data, optional.
+        """
         if params is not None:
             self.params = params
         if raw_data is not None:
