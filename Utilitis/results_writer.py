@@ -2,21 +2,37 @@ import nibabel as nib
 import numpy as np
 from pathlib import Path
 import csv
-from typing import Callable
+from typing import Callable, List, Union, Any, Optional
 from Utilitis.utils import get_function_parameter
 
+
 def save_results(
-    function: Callable | None,
-    fit_map: np.ndarray | None,
-    r2: np.ndarray | None,
-    mask: np.ndarray | None,
-    affine: np.ndarray,
-    header: np.ndarray | None,
-    nii_folder: str | Path,
-    results_path: str | Path,
-    return_params: list | None = None,
-    decimal: str = ",",
-):
+        fit_map: np.ndarray,
+        affine: np.ndarray,
+        nii_folder: Union[str, Path],
+        results_path: Union[str, Path],
+        function: Optional[Callable] = None,
+        r2: Optional[np.ndarray] = None,
+        mask: Optional[np.ndarray] = None,
+        header: Optional[np.ndarray] = None,
+        return_params: Optional[List[str]] = None,
+        decimal: str = ","
+) -> Optional[List[dict]]:
+    """
+    Save results of the fitting procedure to Nifti and CSV files.
+
+    :param function: Fitting function used.
+    :param fit_map: Array of fitting maps.
+    :param r2: Array of R squared values.
+    :param mask: Array of the masks.
+    :param affine: Affine transformation to be used in the Nifti files.
+    :param header: Header information to be used in the Nifti files.
+    :param nii_folder: Path to the folder to store the Nifti files.
+    :param results_path: Path to the folder to store the CSV results.
+    :param return_params: List of parameters to return, if None returns all.
+    :param decimal: Decimal separator for the numbers in the CSV files.
+    :return: List of result dictionaries.
+    """
     return_list = []
     nii_folder = Path(nii_folder)
     results_path = Path(results_path)
@@ -28,46 +44,46 @@ def save_results(
 
     save_nii(fit_map, affine, header, nii_folder / "params.nii.gz")
 
-    if function is not None:
-        parameters = get_function_parameter(function)
-    else:
-        fit_map = [fit_map]
-        parameters = ['value']
+    parameters = ['value'] if function is None else get_function_parameter(function)
+
     for ii, parameter in enumerate(parameters):
         save_nii(fit_map[ii], affine, header, nii_folder / f"{parameter}_map.nii.gz")
         results = {}
         for i in range(1, int(mask.max()) + 1):
-            m = mask.copy()
-            m = np.where(m == i, 1, 0)
+            m = np.where(mask == i, 1, 0)
 
             times = fit_map[ii][m == 1]
-            if len(times) == 0:
+            if times.size == 0:
                 continue
 
             results[str(i)] = [
-                "%.2f" % np.nanmean(times),
-                "%.2f" % np.nanstd(times),
-                "%.2f" % np.nanmin(times),
-                "%.2f" % np.nanmax(times),
-                "%.2f" % len(times[~np.isnan(times)]) + "/" + "%.2f" % np.sum(m),
-                "%.2f" % np.nanmean(r2[m == 1]) if r2 is not None else "NaN",
+                f"{np.nanmean(times):.2f}",
+                f"{np.nanstd(times):.2f}",
+                f"{np.nanmin(times):.2f}",
+                f"{np.nanmax(times):.2f}",
+                f"{len(times[~np.isnan(times)]):.2f}/{np.sum(m):.2f}",
+                f"{np.nanmean(r2[m == 1]):.2f}" if r2 is not None else "NaN"
             ]
         with open(results_path.as_posix() + f'_{parameter}.csv', mode="w", newline="") as csv_file:
             writer = csv.writer(csv_file, delimiter=";")
-            writer.writerow(
-                ["mask_index", "mean", "std", "min", "max", "Pixels", "Mean R^2"]
-            )
+            writer.writerow(["mask_index", "mean", "std", "min", "max", "Pixels", "Mean R^2"])
             for key, value in results.items():
                 value = [v.replace(".", decimal) for v in value]
                 writer.writerow([key] + value)
-        if return_params is None:
+        if return_params is None or parameter in return_params:
             return_list.append(results)
-        elif parameter in return_params:
-            return_list.append(results)
-    return return_list if len(return_list) != 0 else None
+
+    return return_list if return_list else None
 
 
+def save_nii(nii: np.ndarray, affine: np.ndarray, header: Any, file: Path) -> None:
+    """
+    Save a numpy array as a Nifti file.
 
-def save_nii(nii: np.ndarray, affine, header, file: Path):
+    :param nii: The array to be saved.
+    :param affine: Affine transformation for the Nifti file.
+    :param header: Header information for the Nifti file.
+    :param file: Path to save the Nifti file.
+    """
     nii = nii.astype('uint16')
     nib.save(nib.Nifti1Image(nii, affine=affine, header=header), file)
