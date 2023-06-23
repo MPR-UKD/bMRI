@@ -2,8 +2,8 @@ from pathlib import Path
 from typing import Union, Tuple, Dict
 import numpy as np
 from numba import njit
-from Fitting.AbstractFitting import AbstractFitting
-from Utilitis.read import get_dcm_list, get_dcm_array, split_dcm_list
+from src.Fitting.AbstractFitting import AbstractFitting, cpu_count
+from src.Utilitis.read import get_dcm_list, get_dcm_array, split_dcm_list
 
 
 def fit_T1rho_wrapper_raush(TR: float, T1: float, alpha: float):
@@ -74,6 +74,24 @@ def fit_mono_exp_wrapper():
 
     return mono_exp
 
+
+def fit_T2_wrapper_aronen(
+        TR: float, T1: float, alpha: float, TE: float, T2star: float
+):
+    @njit
+    def fit(x: np.ndarray, S0: float, t2: float, offset: float) -> np.ndarray:
+        tau = TR - x
+        counter = (
+                S0
+                * np.exp(-x / t2)
+                * (1 - np.exp(-tau / T1))
+                * np.sin(alpha)
+                * np.exp(-TE / T2star)
+        )
+        denominator = 1 - np.cos(alpha) * np.exp(-tau / T1) * np.exp(-x / t2)
+        return counter / denominator + offset
+
+    return fit
 
 class T1rho_T2prep(AbstractFitting):
     def __init__(

@@ -3,7 +3,7 @@ import numpy as np
 from pathlib import Path
 import csv
 from typing import Callable, List, Union, Any, Optional
-from Utilitis.utils import get_function_parameter
+from src.Utilitis.utils import get_function_parameter
 
 
 def save_results(
@@ -65,6 +65,7 @@ def save_results(
                 f"{np.nanmean(r2[m == 1]):.2f}" if r2 is not None else "NaN"
             ]
         with open(results_path.as_posix() + f'_{parameter}.csv', mode="w", newline="") as csv_file:
+            print(results_path.as_posix() + f'_{parameter}.csv')
             writer = csv.writer(csv_file, delimiter=";")
             writer.writerow(["mask_index", "mean", "std", "min", "max", "Pixels", "Mean R^2"])
             for key, value in results.items():

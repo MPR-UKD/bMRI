@@ -1,10 +1,8 @@
-import time
-
 import numpy as np
 import pytest
 from numba import njit
 
-from Fitting.AbstractFitting import AbstractFitting
+from src.Fitting import AbstractFitting
 
 
 def test_init():

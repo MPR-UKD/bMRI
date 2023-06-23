@@ -1,8 +1,8 @@
 import numpy as np
 import pytest
 
-from Fitting.T2_T2star import T2_T2star, mono_exp
-from Visualization.show import show
+from src.Fitting.T2_T2star import T2_T2star, mono_exp
+
 
 def test_T2():
 

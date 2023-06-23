@@ -1,8 +1,7 @@
 import numpy as np
 import pytest
 
-from Fitting.T1 import InversionRecoveryT1, inversion_recovery_t1
-from Visualization.show import show
+from src.Fitting.T1 import InversionRecoveryT1, inversion_recovery_t1
 
 
 def test_T1():

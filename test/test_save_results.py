@@ -3,8 +3,8 @@ import tempfile
 import numpy as np
 import pytest
 
-from Fitting.T1rho_T2prep import T1rho_T2prep, fit_T1rho_wrapper_aronen
-from Utilitis.results_writer import save_results
+from src.Fitting.T1rho_T2prep import T1rho_T2prep, fit_T1rho_wrapper_aronen
+from src.Utilitis import save_results
 from pathlib import Path
 
 def test():
@@ -23,18 +23,32 @@ def test():
     t1rho = T1rho_T2prep(2, config, normalize=True, boundary=((1, 0, 0), (40, 140, 1)))
     fit_map, r2 = t1rho.fit(dicom=dicom, mask=mask, x=x)
 
-    tempdir = tempfile.TemporaryDirectory()
-    save_results(f_t1rho, fit_map, r2, mask,
-                 affine=np.eye(4), header=None, nii_folder=tempdir.name,
-                 results_path=tempdir.name, decimal=',')
+    tempdir = Path(tempfile.mkdtemp())
+    print(tempdir)
+    return_list = save_results(
+                fit_map=fit_map,
+                 affine=np.eye(4),
+                 nii_folder=tempdir,
+                 results_path = tempdir / "results",
+                 function = t1rho.fit_function,
+                 r2=r2,
+                 mask=mask,
+                 return_params = ['t1rho'])
 
-    for _ in ['offset.csv', 'offset_map.nii.gz', 'params.nii.gz', 'r2.nii.gz', 'S0.csv', 'S0_map.nii.gz', 't1rho.csv',
-              't1rho_map.nii.gz']:
+    assert len(return_list) == 1
+    assert '1' in return_list[0].keys()
+
+    for _ in ['offset_map.nii.gz', 'params.nii.gz', 'r2.nii.gz', 'S0_map.nii.gz', 't1rho_map.nii.gz']:
         exists = False
-        for __ in Path(tempdir.name).glob('*'):
+        for __ in tempdir.glob('*'):
             if _ == __.name:
                 exists = True
+        if not exists:
+            print(_)
         assert exists
+
+    assert len([_ for _ in tempdir.glob('results_*')]) != 0
+    assert (tempdir / "results").exists()
 
 
 if __name__ == '__main__':

@@ -5,8 +5,8 @@ import pydicom
 import numpy as np
 from numba import njit
 
-from Utilitis.read import get_dcm_list, split_dcm_list, get_dcm_array
-from .AbstractFitting import AbstractFitting, ABC
+from src.Utilitis.read import get_dcm_list, split_dcm_list, get_dcm_array
+from .AbstractFitting import AbstractFitting, ABC, cpu_count
 
 
 class InversionRecoveryT1(AbstractFitting, ABC):

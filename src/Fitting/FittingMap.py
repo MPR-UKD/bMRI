@@ -1,7 +1,7 @@
-from Utilitis.read import get_dcm_array, load_nii
+from src.Utilitis.read import get_dcm_array, load_nii
 from pathlib import Path
 import numpy as np
-from typing import Union, Tuple
+from typing import Union, Tuple, Any
 
 
 class FittedMap:

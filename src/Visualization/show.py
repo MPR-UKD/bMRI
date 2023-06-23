@@ -1,5 +1,3 @@
-from Visualization.image_viewer import *
-
 def show(dicom, fit_maps, fit, time_points):
     # Create an instance of the ImageViewer class
 

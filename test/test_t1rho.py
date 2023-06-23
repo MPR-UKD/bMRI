@@ -1,8 +1,8 @@
 import numpy as np
 import pytest
 
-from Fitting.T1rho_T2prep import T1rho_T2prep, fit_T1rho_wrapper_aronen
-from Visualization.show import show
+from src.Fitting.T1rho_T2prep import T1rho_T2prep, fit_T1rho_wrapper_aronen
+
 
 def test():
     config = {"TR": 3000, "T1": 1000, "alpha": 20, "TE": 12, "T2star": 10}

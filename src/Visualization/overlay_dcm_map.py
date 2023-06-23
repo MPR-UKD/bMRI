@@ -1,7 +1,7 @@
 from pathlib import Path
 from matplotlib import pyplot as plt
 import numpy as np
-from Utilitis import load_nii
+from src.Utilitis import load_nii
 
 
 class Overlay:

@@ -2,8 +2,8 @@ from typing import Union, List, Tuple
 import numpy as np
 import pydicom
 from pathlib import Path
-from Utilitis.read import get_dcm_list, get_dcm_array, split_dcm_list
-from .AbstractFitting import AbstractFitting
+from src.Utilitis.read import get_dcm_list, get_dcm_array, split_dcm_list
+from .AbstractFitting import AbstractFitting, cpu_count
 
 
 def mono_exp(x: np.ndarray, S0: float, t2_t2star: float, offset: float) -> np.ndarray:
