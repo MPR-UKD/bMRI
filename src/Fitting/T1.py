@@ -10,7 +10,9 @@ from .AbstractFitting import AbstractFitting, ABC, cpu_count
 
 
 class InversionRecoveryT1(AbstractFitting, ABC):
-    def __init__(self, boundary: Union[tuple, None] = None, normalize: bool = False) -> None:
+    def __init__(
+        self, boundary: Union[tuple, None] = None, normalize: bool = False
+    ) -> None:
         """
         Initializes the InversionRecoveryT1 object.
 
@@ -23,12 +25,12 @@ class InversionRecoveryT1(AbstractFitting, ABC):
         )
 
     def fit(
-            self,
-            dicom: np.ndarray,
-            mask: np.ndarray,
-            x: np.ndarray,
-            pools: int = cpu_count(),
-            min_r2: float = -np.inf,
+        self,
+        dicom: np.ndarray,
+        mask: np.ndarray,
+        x: np.ndarray,
+        pools: int = cpu_count(),
+        min_r2: float = -np.inf,
     ) -> Tuple[np.ndarray, np.ndarray]:
         """
         Fit the T1 relaxation time for the given DICOM image data.
@@ -49,7 +51,9 @@ class InversionRecoveryT1(AbstractFitting, ABC):
 
         return fit_maps, r2_map
 
-    def read_data(self, folder: Union[str, Path, List]) -> Tuple[np.ndarray, np.ndarray]:
+    def read_data(
+        self, folder: Union[str, Path, List]
+    ) -> Tuple[np.ndarray, np.ndarray]:
         """
         Reads DICOM data from the given folder or list of folders.
 
@@ -96,7 +100,9 @@ def get_ti(dcm_files: List) -> Tuple[np.ndarray, np.ndarray]:
 
 
 @njit
-def inversion_recovery_t1(x: np.ndarray, S0: float, t1: float, offset: float) -> np.ndarray:
+def inversion_recovery_t1(
+    x: np.ndarray, S0: float, t1: float, offset: float
+) -> np.ndarray:
     """
     Calculates the inversion recovery curve for T1 relaxation.
 

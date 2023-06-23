@@ -23,8 +23,13 @@ def mono_exp(x: np.ndarray, S0: float, t2_t2star: float, offset: float) -> np.nd
 
 
 class T2_T2star(AbstractFitting):
-    def __init__(self, dim: int, boundary: Union[tuple, None] = None, fit_config: Union[dict, None] = None,
-                 normalize: bool = False):
+    def __init__(
+        self,
+        dim: int,
+        boundary: Union[tuple, None] = None,
+        fit_config: Union[dict, None] = None,
+        normalize: bool = False,
+    ):
         """
         Initialize T2_T2star object.
 
@@ -34,16 +39,18 @@ class T2_T2star(AbstractFitting):
         - fit_config: Configuration for the fitting (optional)
         - normalize: Boolean indicating whether to normalize the data
         """
-        super(T2_T2star, self).__init__(mono_exp, boundary=boundary, fit_config=fit_config, normalize=normalize)
+        super(T2_T2star, self).__init__(
+            mono_exp, boundary=boundary, fit_config=fit_config, normalize=normalize
+        )
         self.dim = dim
 
     def fit(
-            self,
-            dicom: np.ndarray,
-            mask: np.ndarray,
-            x: np.ndarray,
-            pools: int = cpu_count(),
-            min_r2: float = -np.inf,
+        self,
+        dicom: np.ndarray,
+        mask: np.ndarray,
+        x: np.ndarray,
+        pools: int = cpu_count(),
+        min_r2: float = -np.inf,
     ) -> Tuple[np.ndarray, np.ndarray]:
         """
         Fit the T2* relaxation time for the given DICOM image data.
@@ -90,7 +97,9 @@ class T2_T2star(AbstractFitting):
             raise NotImplementedError
 
         # echos, z, x, y --> echos, x, y, z
-        dicom = np.array([get_dcm_array(dcm_files[o]) for o in order]).transpose(0, 3, 2, 1)
+        dicom = np.array([get_dcm_array(dcm_files[o]) for o in order]).transpose(
+            0, 3, 2, 1
+        )
         return dicom, TEs
 
 

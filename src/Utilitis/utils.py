@@ -12,10 +12,12 @@ def get_function_parameter(f: Callable) -> tuple:
     Returns:
     - Tuple containing the names of the parameters.
     """
-    return f.__code__.co_varnames[:f.__code__.co_argcount][1:]
+    return f.__code__.co_varnames[: f.__code__.co_argcount][1:]
 
 
-def binary_grow_3d(array: np.ndarray, dist: int = 1, threshold: float = 0.25) -> np.ndarray:
+def binary_grow_3d(
+    array: np.ndarray, dist: int = 1, threshold: float = 0.25
+) -> np.ndarray:
     """
     Grow a binary 3D array by setting surrounding elements of 1s to 1s.
     The distance of the surrounding elements to consider can be specified through the dist parameter.
@@ -68,7 +70,14 @@ def binary_grow_3d(array: np.ndarray, dist: int = 1, threshold: float = 0.25) ->
                 local_k_max = min(k + dist, array.shape[2])
 
                 # If the mean value of the surrounding elements is greater than threshold, set the element to 1
-                if array[local_i_min:local_i_max, local_j_min:local_j_max, local_k_min:local_k_max].mean() > threshold:
+                if (
+                    array[
+                        local_i_min:local_i_max,
+                        local_j_min:local_j_max,
+                        local_k_min:local_k_max,
+                    ].mean()
+                    > threshold
+                ):
                     grow_array[i, j, k] = 1
 
     # Return the grown array

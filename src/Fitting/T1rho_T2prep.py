@@ -28,7 +28,7 @@ def fit_T1rho_wrapper_raush(TR: float, T1: float, alpha: float):
 
 
 def fit_T1rho_wrapper_aronen(
-        TR: float, T1: float, alpha: float, TE: float, T2star: float
+    TR: float, T1: float, alpha: float, TE: float, T2star: float
 ):
     """
     Creates a T1rho fitting function based on Aronen et al.
@@ -48,11 +48,11 @@ def fit_T1rho_wrapper_aronen(
     def fit(x: np.ndarray, S0: float, t1rho: float, offset: float) -> np.ndarray:
         tau = TR - x
         counter = (
-                S0
-                * np.exp(-x / t1rho)
-                * (1 - np.exp(-tau / T1))
-                * np.sin(alpha)
-                * np.exp(-TE / T2star)
+            S0
+            * np.exp(-x / t1rho)
+            * (1 - np.exp(-tau / T1))
+            * np.sin(alpha)
+            * np.exp(-TE / T2star)
         )
         denominator = 1 - np.cos(alpha) * np.exp(-tau / T1) * np.exp(-x / t1rho)
         return counter / denominator + offset
@@ -75,32 +75,31 @@ def fit_mono_exp_wrapper():
     return mono_exp
 
 
-def fit_T2_wrapper_aronen(
-        TR: float, T1: float, alpha: float, TE: float, T2star: float
-):
+def fit_T2_wrapper_aronen(TR: float, T1: float, alpha: float, TE: float, T2star: float):
     @njit
     def fit(x: np.ndarray, S0: float, t2: float, offset: float) -> np.ndarray:
         tau = TR - x
         counter = (
-                S0
-                * np.exp(-x / t2)
-                * (1 - np.exp(-tau / T1))
-                * np.sin(alpha)
-                * np.exp(-TE / T2star)
+            S0
+            * np.exp(-x / t2)
+            * (1 - np.exp(-tau / T1))
+            * np.sin(alpha)
+            * np.exp(-TE / T2star)
         )
         denominator = 1 - np.cos(alpha) * np.exp(-tau / T1) * np.exp(-x / t2)
         return counter / denominator + offset
 
     return fit
 
+
 class T1rho_T2prep(AbstractFitting):
     def __init__(
-            self,
-            dim: int,
-            config: Union[Dict, None] = None,
-            boundary: Union[Tuple, None] = None,
-            normalize: bool = False,
-            mode_T2: bool = False
+        self,
+        dim: int,
+        config: Union[Dict, None] = None,
+        boundary: Union[Tuple, None] = None,
+        normalize: bool = False,
+        mode_T2: bool = False,
     ):
         """
         Initializes T1rho_T2prep object for fitting T1rho and T2 in MRI data.
@@ -116,11 +115,19 @@ class T1rho_T2prep(AbstractFitting):
         if config is not None:
             if not mode_T2:
                 fit = fit_T1rho_wrapper_aronen(
-                    config["TR"], config["T1"], config["alpha"], config["TE"], config["T2star"]
+                    config["TR"],
+                    config["T1"],
+                    config["alpha"],
+                    config["TE"],
+                    config["T2star"],
                 )
             else:
                 fit = fit_T2_wrapper_aronen(
-                    config["TR"], config["T1"], config["alpha"], config["TE"], config["T2star"]
+                    config["TR"],
+                    config["T1"],
+                    config["alpha"],
+                    config["TE"],
+                    config["T2star"],
                 )
         else:
             fit = None
@@ -129,12 +136,12 @@ class T1rho_T2prep(AbstractFitting):
         self.dim = dim
 
     def fit(
-            self,
-            dicom: np.ndarray,
-            mask: np.ndarray,
-            x: np.ndarray,
-            pools: int = cpu_count(),
-            min_r2: float = -np.inf,
+        self,
+        dicom: np.ndarray,
+        mask: np.ndarray,
+        x: np.ndarray,
+        pools: int = cpu_count(),
+        min_r2: float = -np.inf,
     ) -> Tuple[np.ndarray, np.ndarray]:
         """
         Fit the T1rho or T2 relaxation time for the given DICOM image data.

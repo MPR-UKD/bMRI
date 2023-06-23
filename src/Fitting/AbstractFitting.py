@@ -10,11 +10,11 @@ from itertools import repeat
 
 class AbstractFitting(ABC):
     def __init__(
-            self,
-            fit_function: Callable,
-            boundary: Tuple[float, float] = None,
-            fit_config: Optional[dict] = None,
-            normalize: bool = False
+        self,
+        fit_function: Callable,
+        boundary: Tuple[float, float] = None,
+        fit_config: Optional[dict] = None,
+        normalize: bool = False,
     ) -> None:
         """
         Initializes the AbstractFitting object.
@@ -40,12 +40,12 @@ class AbstractFitting(ABC):
         self.fit_config = fit_config
 
     def fit(
-            self,
-            dicom: np.ndarray,
-            mask: np.ndarray,
-            x: np.ndarray,
-            pools: int = cpu_count(),
-            min_r2: float = -np.inf,
+        self,
+        dicom: np.ndarray,
+        mask: np.ndarray,
+        x: np.ndarray,
+        pools: int = cpu_count(),
+        min_r2: float = -np.inf,
     ) -> Tuple[np.ndarray, np.ndarray]:
         """
         Fit the given data using parallel processing.
@@ -60,7 +60,7 @@ class AbstractFitting(ABC):
         Returns:
         - Tuple[np.ndarray, np.ndarray]: Arrays of fit parameters and R squared values
         """
-        dicom = dicom.astype('float64')
+        dicom = dicom.astype("float64")
         assert len(mask.shape) == len(dicom.shape) - 1
         if len(mask.shape) == 2:
             # Change size of dicom and mask to 3D
@@ -80,7 +80,7 @@ class AbstractFitting(ABC):
             fit_function=self.fit_function,
             bounds=self.bounds,
             config=self.fit_config,
-            normalize=self.normalize
+            normalize=self.normalize,
         )
 
         # Create an iterator of arguments to pass to fit_pixel
@@ -112,12 +112,12 @@ class AbstractFitting(ABC):
 
 
 def fit_pixel(
-        y: np.ndarray,
-        x: np.ndarray,
-        fit_function: Callable,
-        bounds: Optional[Tuple[float, float]] = None,
-        config: Optional[dict] = None,
-        normalize: bool = False
+    y: np.ndarray,
+    x: np.ndarray,
+    fit_function: Callable,
+    bounds: Optional[Tuple[float, float]] = None,
+    config: Optional[dict] = None,
+    normalize: bool = False,
 ) -> Union[np.ndarray, None]:
     """
     Fits a curve to the given data using the provided fit function.
@@ -135,7 +135,7 @@ def fit_pixel(
     """
     if normalize:
         y /= y.max()
-    kwargs = {'xtol': 0.0000000001}
+    kwargs = {"xtol": 0.0000000001}
     if bounds is not None:
         kwargs["bounds"] = bounds
     if config is not None:
@@ -148,11 +148,11 @@ def fit_pixel(
 
 
 def calculate_r2(
-        y: np.ndarray,
-        fit_function: Callable,
-        param: np.ndarray,
-        x: np.ndarray,
-        normalize: bool = False
+    y: np.ndarray,
+    fit_function: Callable,
+    param: np.ndarray,
+    x: np.ndarray,
+    normalize: bool = False,
 ) -> float:
     """
     Calculate the R squared value of the fitted curve.
@@ -185,6 +185,6 @@ def get_r2(residuals: np.ndarray, y: np.ndarray) -> float:
     Returns:
     - float: R squared value
     """
-    ss_res = np.sum(residuals ** 2)
+    ss_res = np.sum(residuals**2)
     ss_tot = np.sum((y - np.mean(y)) ** 2)
     return 1 - (ss_res / ss_tot)

@@ -7,16 +7,16 @@ from src.Utilitis.utils import get_function_parameter
 
 
 def save_results(
-        fit_map: np.ndarray,
-        affine: np.ndarray,
-        nii_folder: Union[str, Path],
-        results_path: Union[str, Path],
-        function: Optional[Callable] = None,
-        r2: Optional[np.ndarray] = None,
-        mask: Optional[np.ndarray] = None,
-        header: Optional[np.ndarray] = None,
-        return_params: Optional[List[str]] = None,
-        decimal: str = ","
+    fit_map: np.ndarray,
+    affine: np.ndarray,
+    nii_folder: Union[str, Path],
+    results_path: Union[str, Path],
+    function: Optional[Callable] = None,
+    r2: Optional[np.ndarray] = None,
+    mask: Optional[np.ndarray] = None,
+    header: Optional[np.ndarray] = None,
+    return_params: Optional[List[str]] = None,
+    decimal: str = ",",
 ) -> Optional[List[dict]]:
     """
     Save results of the fitting procedure to Nifti and CSV files.
@@ -44,7 +44,7 @@ def save_results(
 
     save_nii(fit_map, affine, header, nii_folder / "params.nii.gz")
 
-    parameters = ['value'] if function is None else get_function_parameter(function)
+    parameters = ["value"] if function is None else get_function_parameter(function)
 
     for ii, parameter in enumerate(parameters):
         save_nii(fit_map[ii], affine, header, nii_folder / f"{parameter}_map.nii.gz")
@@ -62,12 +62,16 @@ def save_results(
                 f"{np.nanmin(times):.2f}",
                 f"{np.nanmax(times):.2f}",
                 f"{len(times[~np.isnan(times)]):.2f}/{np.sum(m):.2f}",
-                f"{np.nanmean(r2[m == 1]):.2f}" if r2 is not None else "NaN"
+                f"{np.nanmean(r2[m == 1]):.2f}" if r2 is not None else "NaN",
             ]
-        with open(results_path.as_posix() + f'_{parameter}.csv', mode="w", newline="") as csv_file:
-            print(results_path.as_posix() + f'_{parameter}.csv')
+        with open(
+            results_path.as_posix() + f"_{parameter}.csv", mode="w", newline=""
+        ) as csv_file:
+            print(results_path.as_posix() + f"_{parameter}.csv")
             writer = csv.writer(csv_file, delimiter=";")
-            writer.writerow(["mask_index", "mean", "std", "min", "max", "Pixels", "Mean R^2"])
+            writer.writerow(
+                ["mask_index", "mean", "std", "min", "max", "Pixels", "Mean R^2"]
+            )
             for key, value in results.items():
                 value = [v.replace(".", decimal) for v in value]
                 writer.writerow([key] + value)
@@ -86,5 +90,5 @@ def save_nii(nii: np.ndarray, affine: np.ndarray, header: Any, file: Path) -> No
     :param header: Header information for the Nifti file.
     :param file: Path to save the Nifti file.
     """
-    nii = nii.astype('uint16')
+    nii = nii.astype("uint16")
     nib.save(nib.Nifti1Image(nii, affine=affine, header=header), file)

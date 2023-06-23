@@ -20,7 +20,9 @@ class FittedMap:
         self.low_percentile = low_percentile
         self.up_percentile = up_percentile
 
-    def __call__(self, dcm_folder: Union[str, Path], mask_file: Union[str, Path]) -> Tuple[np.ndarray, Any]:
+    def __call__(
+        self, dcm_folder: Union[str, Path], mask_file: Union[str, Path]
+    ) -> Tuple[np.ndarray, Any]:
         """
         Process the fitted map.
 

@@ -3,7 +3,14 @@ import sys
 import numpy as np
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QImage, QPixmap
-from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel, QWidget, QSlider, QHBoxLayout
+from PyQt5.QtWidgets import (
+    QApplication,
+    QMainWindow,
+    QLabel,
+    QWidget,
+    QSlider,
+    QHBoxLayout,
+)
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.cm import get_cmap
 from matplotlib.figure import Figure
@@ -25,8 +32,16 @@ class ImageViewer(QMainWindow):
     ImageViewer class to visualize DICOM data and fitted maps.
     """
 
-    def __init__(self, dicom: np.ndarray, fit_maps: np.ndarray | list, fit_function: callable,
-                 time_points: list[int], c_int: int | None = None, alpha: float = 0.3, normalize: bool = True):
+    def __init__(
+        self,
+        dicom: np.ndarray,
+        fit_maps: np.ndarray | list,
+        fit_function: callable,
+        time_points: list[int],
+        c_int: int | None = None,
+        alpha: float = 0.3,
+        normalize: bool = True,
+    ):
         """
         Initialize the ImageViewer.
 
@@ -55,11 +70,13 @@ class ImageViewer(QMainWindow):
         # Create a label to display the image
         self.image_label = QLabel(self)
         self.image_label.mousePressEvent = self.update_fit_function
-        #self.image_label.mouseMoveEvent = self.update_fit_function
+        # self.image_label.mouseMoveEvent = self.update_fit_function
         self.scaling_factor = calc_scaling_factor(dicom.shape)
-        width, height = dicom.shape[1] * self.scaling_factor, dicom.shape[2] * self.scaling_factor
+        width, height = (
+            dicom.shape[1] * self.scaling_factor,
+            dicom.shape[2] * self.scaling_factor,
+        )
         self.image_label.setFixedSize(width, height)
-
 
         # Display the first slice
         self.display_slice()
@@ -113,7 +130,9 @@ class ImageViewer(QMainWindow):
         image = (image - image.min()) / (image.max() - image.min())
 
         # Zoom the image by a factor of 5
-        image_zoomed = ndimage.zoom(image, (self.scaling_factor, self.scaling_factor), order=0, mode='nearest')
+        image_zoomed = ndimage.zoom(
+            image, (self.scaling_factor, self.scaling_factor), order=0, mode="nearest"
+        )
 
         # Convert the zoomed image to an RGB image
         image_zoomed_rgb = np.dstack((image_zoomed, image_zoomed, image_zoomed))
@@ -121,12 +140,18 @@ class ImageViewer(QMainWindow):
         # Normalize the color map to the range [0, 1]
         if self.color_map is not None:
             color_map = self.color_map[:, :, self.current_slice]
-            color_map_norm = (color_map - color_map.min()) / (color_map.max() - color_map.min())
+            color_map_norm = (color_map - color_map.min()) / (
+                color_map.max() - color_map.min()
+            )
 
             # Zoom the color map by a factor of 5
-            color_map_zoomed = ndimage.zoom(color_map_norm, (self.scaling_factor, self.scaling_factor), order=0,
-                                            mode='nearest')
-            jet_cmap = get_cmap('jet')
+            color_map_zoomed = ndimage.zoom(
+                color_map_norm,
+                (self.scaling_factor, self.scaling_factor),
+                order=0,
+                mode="nearest",
+            )
+            jet_cmap = get_cmap("jet")
             color_map_zoomed_rgb = jet_cmap(color_map_zoomed)
 
             # Overlay the color map on the DICOM image pixel by pixel
@@ -134,12 +159,19 @@ class ImageViewer(QMainWindow):
             for i in range(image_zoomed.shape[0]):
                 for j in range(image_zoomed.shape[1]):
                     if color_map_zoomed[i][j] > 0:
-                        image_zoomed_rgb[i][j] = (1-alpha) * image_zoomed_rgb[i][j] + alpha * color_map_zoomed_rgb[i][j][:3]
+                        image_zoomed_rgb[i][j] = (1 - alpha) * image_zoomed_rgb[i][
+                            j
+                        ] + alpha * color_map_zoomed_rgb[i][j][:3]
 
-        image_zoomed_rgb = (image_zoomed_rgb * 255).round().astype('int8')
+        image_zoomed_rgb = (image_zoomed_rgb * 255).round().astype("int8")
         # Convert the zoomed RGB image to a QImage and create a QPixmap from it
-        qimage = QImage(image_zoomed_rgb, image_zoomed_rgb.shape[1], image_zoomed_rgb.shape[0],
-                        image_zoomed_rgb.strides[0], QImage.Format_RGB888)
+        qimage = QImage(
+            image_zoomed_rgb,
+            image_zoomed_rgb.shape[1],
+            image_zoomed_rgb.shape[0],
+            image_zoomed_rgb.strides[0],
+            QImage.Format_RGB888,
+        )
         pixmap = QPixmap.fromImage(qimage)
 
         # Set the pixmap as the background image of the label
@@ -150,9 +182,11 @@ class ImageViewer(QMainWindow):
         Initialize the fit function plot.
         """
         self.fit_function_widget = FitFunctionWidget(
-            [np.NAN] * len(self.time_points), self.fit_function,
+            [np.NAN] * len(self.time_points),
+            self.fit_function,
             [np.NAN] * len(self.current_params[:, 0, 0]),
-            self.time_points, self
+            self.time_points,
+            self,
         )
         self.plot_container.layout().addWidget(self.fit_function_widget)
 
@@ -168,7 +202,7 @@ class ImageViewer(QMainWindow):
             pixel_params = self.current_params[:, y, x]
         except IndexError:
             return None
-        raw_data = self.dicom[:, y, x, self.current_slice].astype('float64')
+        raw_data = self.dicom[:, y, x, self.current_slice].astype("float64")
         if self.norm:
             raw_data /= raw_data.max()
         self.fit_function_widget.update_plot(pixel_params, raw_data)
@@ -179,8 +213,14 @@ class FitFunctionWidget(QWidget):
     Widget for displaying the fitting function.
     """
 
-    def __init__(self, raw_data: list[float], fit_function: callable, params: list[float],
-                 time_points: list[int], parent: QWidget = None):
+    def __init__(
+        self,
+        raw_data: list[float],
+        fit_function: callable,
+        params: list[float],
+        time_points: list[int],
+        parent: QWidget = None,
+    ):
         """
         Initialize the FitFunctionWidget.
 

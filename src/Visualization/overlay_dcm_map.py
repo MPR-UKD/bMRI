@@ -5,8 +5,15 @@ from src.Utilitis import load_nii
 
 
 class Overlay:
-    def __init__(self, dcm_array: np.ndarray | Path, map_array: np.ndarray | Path, mask_array: np.ndarray | Path,
-                 min_val: float = 0, max_val: float = 200, label: str = ""):
+    def __init__(
+        self,
+        dcm_array: np.ndarray | Path,
+        map_array: np.ndarray | Path,
+        mask_array: np.ndarray | Path,
+        min_val: float = 0,
+        max_val: float = 200,
+        label: str = "",
+    ):
         """
         Initialize the Overlay.
 
@@ -17,9 +24,21 @@ class Overlay:
         :param max_val: Maximum value for the overlay, optional.
         :param label: Label for the color bar, optional.
         """
-        self.dcm = dcm_array if isinstance(dcm_array, np.ndarray) else load_nii(dcm_array).array
-        self.map = map_array if isinstance(map_array, np.ndarray) else load_nii(map_array).array
-        self.mask = mask_array if isinstance(mask_array, np.ndarray) else load_nii(mask_array).array
+        self.dcm = (
+            dcm_array
+            if isinstance(dcm_array, np.ndarray)
+            else load_nii(dcm_array).array
+        )
+        self.map = (
+            map_array
+            if isinstance(map_array, np.ndarray)
+            else load_nii(map_array).array
+        )
+        self.mask = (
+            mask_array
+            if isinstance(mask_array, np.ndarray)
+            else load_nii(mask_array).array
+        )
         self.map[self.mask == 0] = np.nan
         self.min = min_val
         self.max = max_val

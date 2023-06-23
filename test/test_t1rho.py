@@ -8,7 +8,7 @@ def test():
     config = {"TR": 3000, "T1": 1000, "alpha": 20, "TE": 12, "T2star": 10}
 
     mask = np.ones(shape=(2, 2, 1))
-    x = np.array([0, 10, 20, 30, 40, 50, 60, 70, 80,90, 100, 110, 120, 130, 140])
+    x = np.array([0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140])
     dicom = np.zeros(shape=(len(x), 2, 2, 1))
     f_t1rho = fit_T1rho_wrapper_aronen(TR=3000, T1=1000, alpha=20, TE=12, T2star=10)
     t1rhos = [30, 35, 40, 70]
@@ -25,5 +25,5 @@ def test():
     assert abs(fit_map[1][1, 1, 0] - t1rhos[3]) < 1
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pytest.main()
