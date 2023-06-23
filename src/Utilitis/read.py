@@ -24,18 +24,26 @@ def split_dcm_list(dcm_list: List[Path]) -> List[List[Path]]:
     :param dcm_list: List of paths to DICOM files.
     :return: List of lists of DICOM file paths, split by slice location.
     """
-    locations = defaultdict(list)
+    locations = {}
     for f in dcm_list:
         try:
-            with pydicom.dcmread(f) as d:
-                slice_location = d["SliceLocation"].value
-                locations[slice_location].append(f)
-        except Exception as e:
-            print(f"Error reading DICOM file {f}: {e}")
+            d = pydicom.dcmread(f)
+        except BaseException:
             continue
+        if d["SliceLocation"].value in locations.keys():
+            locations[d["SliceLocation"].value].append(f)
+        else:
+            locations[d["SliceLocation"].value] = [f]
     locations = check_locations(locations)
-    sorted_keys = natsorted(locations.keys())
-    return [locations[key] for key in sorted_keys]
+    split_dcmList = [locations[key] for key in natsorted(list(locations.keys()))]
+    echo_list = [[] for _ in range(len(split_dcmList[0]))]
+    keys = list(locations.keys())
+    keys.sort()
+    for key in keys:
+        echos = locations[key]
+        for idx in range(len(echo_list)):
+            echo_list[idx].append(echos[idx])
+    return echo_list
 
 
 def check_locations(locations: Dict[Any, List[Path]]) -> Dict[Any, List[Path]]:
