@@ -55,7 +55,7 @@ def test():
             print(_)
         assert exists
 
-    assert len([_ for _ in tempdir.glob("results_*")]) != 0
+    assert len([_ for _ in tempdir.glob("*.csv")]) != 0
     assert (tempdir / "results").exists()
 
 
