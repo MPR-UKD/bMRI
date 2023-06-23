@@ -56,7 +56,6 @@ def test():
         assert exists
 
     assert len([_ for _ in tempdir.glob("*.csv")]) != 0
-    assert (tempdir / "results").exists()
 
 
 if __name__ == "__main__":

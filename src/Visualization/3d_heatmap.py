@@ -135,8 +135,8 @@ def process_image(
 
 
 if __name__ == "__main__":
-    root = Path(r"E:\Buckup\Projekt_Schweineknie\Daten")
-    imgs = Path(r"C:\Users\ludge\Downloads\Bild")
+    root = Path(r"<path>")  # placeholder
+    imgs = Path(r"<path>")  # placeholder
     # if imgs.exists():
     #    shutil.rmtree(imgs)
     #    os.mkdir(imgs)
