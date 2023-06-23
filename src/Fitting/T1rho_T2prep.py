@@ -130,7 +130,7 @@ class T1rho_T2prep(AbstractFitting):
                     config["T2star"],
                 )
         else:
-            fit = None
+            fit = fit_mono_exp_wrapper()
 
         super(T1rho_T2prep, self).__init__(fit, boundary=boundary, normalize=normalize)
         self.dim = dim
