@@ -25,7 +25,7 @@ class ImageViewer(QMainWindow):
     ImageViewer class to visualize DICOM data and fitted maps.
     """
 
-    def __init__(self, dicom: np.ndarray, fit_maps: np.ndarray, fit_function: callable,
+    def __init__(self, dicom: np.ndarray, fit_maps: np.ndarray | list, fit_function: callable,
                  time_points: list[int], c_int: int | None = None, alpha: float = 0.3, normalize: bool = True):
         """
         Initialize the ImageViewer.
@@ -45,7 +45,7 @@ class ImageViewer(QMainWindow):
         self.dicom = dicom
         self.alpha = alpha
         self.norm = normalize
-        self.fit_maps = fit_maps
+        self.fit_maps = np.array(fit_maps)
         self.color_map = fit_maps[c_int] if c_int is not None else None
         self.fit_function = fit_function
         self.scaling_factor = calc_scaling_factor(dicom.shape)
