@@ -67,7 +67,6 @@ def save_results(
         with open(
             results_path.as_posix() + f"_{parameter}.csv", mode="w", newline=""
         ) as csv_file:
-            print(results_path.as_posix() + f"_{parameter}.csv")
             writer = csv.writer(csv_file, delimiter=";")
             writer.writerow(
                 ["mask_index", "mean", "std", "min", "max", "Pixels", "Mean R^2"]
