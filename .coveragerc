@@ -1,0 +1,17 @@
+# Configuration file for unittest test coverage evaluation using pytest-cov
+#
+# Note:
+# Unlike the usual way of doing things, the relative paths are provided with
+# respect to the pytest execution path here.
+# NOT WITH RESPECT TO THE LOCATION OF THIS FILE!!!!
+
+[run]
+branch = True
+omit =
+    tests/*
+    **/__init__.py
+
+[report]
+sort=Name
+exclude_lines =
+    pragma: no cover
