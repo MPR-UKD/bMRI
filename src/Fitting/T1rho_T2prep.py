@@ -178,7 +178,7 @@ class T1rho_T2prep(AbstractFitting):
         x = [0, 2 * first_SL]
         for _ in range(1, n - 1):
             x.append(x[-1] + 2 * inc_SL)
-        return x
+        return np.array(x)
 
     def read_data(self, folder: Union[str, Path]) -> Tuple[np.ndarray, None]:
         """
@@ -204,8 +204,22 @@ class T1rho_T2prep(AbstractFitting):
             dcm_files = split_dcm_list(dcm_files)
         else:
             raise NotImplementedError
+
+        order = self.check_order(dcm_files)
         # echos, z, x, y --> echos, x, y, z
-        dicom = np.array([get_dcm_array(dcm) for dcm in dcm_files]).transpose(
+        dicom = np.array([get_dcm_array(dcm_files[o]) for o in order]).transpose(
             0, 3, 2, 1
         )
         return dicom, None
+
+    def check_order(self, dcm_files: list[list[Path]]) -> np.ndarray:
+        """
+        Check dcm
+        Args:
+            dcm_files:
+
+        Returns:
+
+        """
+        signal = [get_dcm_array(dcm).mean() for dcm in dcm_files]
+        return np.argsort(signal)[::-1]
