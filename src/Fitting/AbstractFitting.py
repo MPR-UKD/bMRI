@@ -1,4 +1,4 @@
-from abc import ABC
+from abc import ABC, abstractmethod
 from multiprocessing import Pool, cpu_count
 from typing import Callable, Tuple, Optional, List, Union, Any
 import numpy as np
@@ -38,6 +38,10 @@ class AbstractFitting(ABC):
         - fit_config (dict): Configuration for the fit function
         """
         self.fit_config = fit_config
+
+    @abstractmethod
+    def run(self, *args):
+        raise NotImplemented
 
     def fit(
         self,

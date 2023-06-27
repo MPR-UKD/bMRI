@@ -3,6 +3,7 @@ import numpy as np
 import pydicom
 from pathlib import Path
 from src.Utilitis.read import get_dcm_list, get_dcm_array, split_dcm_list
+from src.Utilitis import save_results, load_nii
 from .AbstractFitting import AbstractFitting, cpu_count
 
 
@@ -43,6 +44,40 @@ class T2_T2star(AbstractFitting):
             mono_exp, boundary=boundary, fit_config=fit_config, normalize=normalize
         )
         self.dim = dim
+
+    def run(
+        self,
+        dicom_folder: Path,
+        mask_file: Path,
+        pools: int = 0,
+        min_r2: float = -np.inf,
+    ):
+        """
+        Run full evaluation pipline.
+
+        Args:
+            - dicom_folder:  Path to the folder containing DICOM files
+            - mask_file:  Path to the nifti mask file
+            - pools: Number of parallel pools for computation (optional)
+            - min_r2: minimum R^2 value for a fit to be considered valid (optional)
+
+        Returns:
+            results
+        """
+        data, te = self.read_data(dicom_folder)
+        mask = load_nii(mask_file)
+        fit_map, r2 = self.fit(dicom=data, mask=mask.array, x=te, pools=pools)
+        results = save_results(
+            fit_map=fit_map,
+            r2=r2,
+            affine=mask.affine,
+            function=self.fit_function,
+            nii_folder=dicom_folder,
+            results_path=dicom_folder,
+            mask=mask.array,
+            header=mask.header,
+        )
+        return results
 
     def fit(
         self,
