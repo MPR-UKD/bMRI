@@ -6,15 +6,15 @@ from numba import njit
 from scipy.optimize import curve_fit
 from functools import partial
 from itertools import repeat
-
+from pathlib import Path
 
 class AbstractFitting(ABC):
     def __init__(
-        self,
-        fit_function: Callable,
-        boundary: Tuple[float, float] = None,
-        fit_config: Optional[dict] = None,
-        normalize: bool = False,
+            self,
+            fit_function: Callable,
+            boundary: Tuple[float, float] = None,
+            fit_config: Optional[dict] = None,
+            normalize: bool = False,
     ) -> None:
         """
         Initializes the AbstractFitting object.
@@ -44,12 +44,12 @@ class AbstractFitting(ABC):
         raise NotImplemented
 
     def fit(
-        self,
-        dicom: np.ndarray,
-        mask: np.ndarray,
-        x: np.ndarray,
-        pools: int = cpu_count(),
-        min_r2: float = -np.inf,
+            self,
+            dicom: np.ndarray,
+            mask: np.ndarray,
+            x: np.ndarray,
+            pools: int = cpu_count(),
+            min_r2: float = -np.inf,
     ) -> Tuple[np.ndarray, np.ndarray]:
         """
         Fit the given data using parallel processing.
@@ -114,14 +114,36 @@ class AbstractFitting(ABC):
 
         return np.array(fit_maps), r2_map
 
+    def save_times(self, times: np.ndarray, file_path: Path) -> None:
+        """
+        Save times for further evaluations.
+
+        Args:
+            times: np.ndarray with acquisition times.
+            file_path: file path
+        """
+        np.savetxt(file_path, times)
+
+    def load_times(self, file_path: Path) -> np.ndarray:
+        """
+        Load acquisition times.
+
+        Args:
+            file_path: file path to txt
+
+        Returns:
+            acquisition times (np.ndarray)
+        """
+        return np.loadtxt(file_path)
+
 
 def fit_pixel(
-    y: np.ndarray,
-    x: np.ndarray,
-    fit_function: Callable,
-    bounds: Optional[Tuple[float, float]] = None,
-    config: Optional[dict] = None,
-    normalize: bool = False,
+        y: np.ndarray,
+        x: np.ndarray,
+        fit_function: Callable,
+        bounds: Optional[Tuple[float, float]] = None,
+        config: Optional[dict] = None,
+        normalize: bool = False,
 ) -> Union[np.ndarray, None]:
     """
     Fits a curve to the given data using the provided fit function.
@@ -152,11 +174,11 @@ def fit_pixel(
 
 
 def calculate_r2(
-    y: np.ndarray,
-    fit_function: Callable,
-    param: np.ndarray,
-    x: np.ndarray,
-    normalize: bool = False,
+        y: np.ndarray,
+        fit_function: Callable,
+        param: np.ndarray,
+        x: np.ndarray,
+        normalize: bool = False,
 ) -> float:
     """
     Calculate the R squared value of the fitted curve.
@@ -189,6 +211,6 @@ def get_r2(residuals: np.ndarray, y: np.ndarray) -> float:
     Returns:
     - float: R squared value
     """
-    ss_res = np.sum(residuals**2)
+    ss_res = np.sum(residuals ** 2)
     ss_tot = np.sum((y - np.mean(y)) ** 2)
     return 1 - (ss_res / ss_tot)
