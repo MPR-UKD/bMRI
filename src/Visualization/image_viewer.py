@@ -1,5 +1,5 @@
 import sys
-
+from numba import njit
 import numpy as np
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QImage, QPixmap
@@ -286,12 +286,14 @@ if __name__ == "__main__":
     dicom = np.zeros((10, 128, 128, 42))
     for i in range(10):
         for ii in range(42):
-            dicom[i, :, :, ii] = default * (11 - i) + np.random.random((128, 128)) * 500
+            dicom[i, :, :, ii] = default * (i + 1)
 
+    dicom = dicom / dicom.max() * 4016
     time_points = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
     # Create fitted_map
-    fit_maps = np.array([dicom[0], dicom[0]])
+    fit_maps = np.array([(dicom[-1]-dicom[0]) / (time_points[-1] - time_points[0]), np.zeros_like(dicom[0])])
 
+    @njit
     def fit(x, a, b):
         return a * x + b
 
@@ -299,7 +301,7 @@ if __name__ == "__main__":
 
     app = QApplication(sys.argv)
 
-    viewer = ImageViewer(dicom, fit_maps, fit, time_points, 1)
+    viewer = ImageViewer(dicom, fit_maps, fit, time_points, 0, normalize = False)
     viewer.show()
 
     # Run the PyQt5 application
