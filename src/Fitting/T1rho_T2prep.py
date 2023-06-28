@@ -4,6 +4,7 @@ import numpy as np
 from numba import njit
 from src.Fitting.AbstractFitting import AbstractFitting, cpu_count
 from src.Utilitis.read import get_dcm_list, get_dcm_array, split_dcm_list
+from src.Utilitis import save_results, load_nii
 
 
 def fit_T1rho_wrapper_raush(TR: float, T1: float, alpha: float):
@@ -179,6 +180,42 @@ class T1rho_T2prep(AbstractFitting):
         for _ in range(1, n - 1):
             x.append(x[-1] + 2 * inc_SL)
         return np.array(x)
+
+    def run(
+        self,
+        dicom_folder: Path,
+        mask_file: Path,
+        tsl: np.ndarray,
+        pools: int = 0,
+        min_r2: float = -np.inf,
+    ):
+        """
+        Run full evaluation pipline.
+
+        Args:
+            - dicom_folder: Path to the folder containing DICOM files
+            - mask_file: Path to the nifti mask file
+            - tsl: Array of spin-lock times
+            - pools: Number of parallel pools for computation (optional)
+            - min_r2: minimum R^2 value for a fit to be considered valid (optional)
+
+        Returns:
+            results
+        """
+        data, _ = self.read_data(dicom_folder)
+        mask = load_nii(mask_file)
+        fit_map, r2 = self.fit(dicom=data, mask=mask.array, x=tsl, pools=pools)
+        results = save_results(
+            fit_map=fit_map,
+            r2=r2,
+            affine=mask.affine,
+            function=self.fit_function,
+            nii_folder=dicom_folder,
+            results_path=dicom_folder,
+            mask=mask.array,
+            header=mask.header,
+        )
+        return results
 
     def read_data(self, folder: Union[str, Path]) -> Tuple[np.ndarray, None]:
         """
