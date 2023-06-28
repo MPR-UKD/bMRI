@@ -17,7 +17,7 @@ error_text = (
 def t2star_fitting_example():
     t2_star_folder = (
         Path(__file__).parent
-        / "test2"
+        / "test"
         / "resources"
         / "20211206_1038"
         / "7_T2-star_map_3D_cor_18818"
