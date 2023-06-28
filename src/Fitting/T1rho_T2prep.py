@@ -209,6 +209,7 @@ class T1rho_T2prep(AbstractFitting):
         mask = load_nii(mask_file)
         if save_dicom_as_nii:
             save_nii(data[:, :, :, ::-1], mask.affine, mask.header, dicom_folder / "dicom.nii.gz")
+            self.save_times(tsl, dicom_folder / "acquisition_times.txt")
         fit_map, r2 = self.fit(dicom=data, mask=mask.array, x=tsl, pools=pools)
         results = save_results(
             fit_map=fit_map,
