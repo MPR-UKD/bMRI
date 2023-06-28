@@ -345,5 +345,27 @@ def example_2():
     sys.exit(app.exec_())
 
 
+def example_t2star():
+    from src.Fitting import T2_T2star
+    t2_star_folder = (
+        Path(__file__).parent.parent.parent
+        / "test"
+        / "resources"
+        / "20211206_1038"
+        / "7_T2-star_map_3D_cor_18818"
+    )
+    t2star = T2_T2star(dim=3)
+    app = QApplication(sys.argv)
+    viewer = ImageViewer()
+    viewer.start(
+        dicom=t2_star_folder / "dicom.nii.gz",
+        fit_maps=t2_star_folder / "params.nii.gz",
+        fit_function=t2star.fit_function,
+        time_points=[0, 20, 80, 140],
+        c_int=1
+    )
+    viewer.show()
+    sys.exit(app.exec_())
+
 if __name__ == "__main__":
     example_2()
