@@ -1,10 +1,10 @@
 from pathlib import Path
-from typing import Union, Tuple, Dict
+from typing import Union, Tuple, Dict, List
 import numpy as np
 from numba import njit
 from src.Fitting.AbstractFitting import AbstractFitting, cpu_count
 from src.Utilitis.read import get_dcm_list, get_dcm_array, split_dcm_list
-from src.Utilitis import save_results, load_nii
+from src.Utilitis import save_results, load_nii, save_nii
 
 
 def fit_T1rho_wrapper_raush(TR: float, T1: float, alpha: float):
@@ -185,9 +185,10 @@ class T1rho_T2prep(AbstractFitting):
         self,
         dicom_folder: Path,
         mask_file: Path,
-        tsl: np.ndarray,
+        tsl: np.ndarray | List,
         pools: int = 0,
         min_r2: float = -np.inf,
+        save_dicom_as_nii: bool = True,
     ):
         """
         Run full evaluation pipline.
@@ -198,12 +199,16 @@ class T1rho_T2prep(AbstractFitting):
             - tsl: Array of spin-lock times
             - pools: Number of parallel pools for computation (optional)
             - min_r2: minimum R^2 value for a fit to be considered valid (optional)
+            - save_dicom_as_nii: Save dicom array as nifti for image_viewer
 
         Returns:
             results
         """
+        tsl = np.array(tsl)
         data, _ = self.read_data(dicom_folder)
         mask = load_nii(mask_file)
+        if save_dicom_as_nii:
+            save_nii(data[:, :, :, ::-1], mask.affine, mask.header, dicom_folder / "dicom.nii.gz")
         fit_map, r2 = self.fit(dicom=data, mask=mask.array, x=tsl, pools=pools)
         results = save_results(
             fit_map=fit_map,
@@ -244,8 +249,10 @@ class T1rho_T2prep(AbstractFitting):
 
         order = self.check_order(dcm_files)
         # echos, z, x, y --> echos, x, y, z
-        dicom = np.array([get_dcm_array(dcm_files[o]) for o in order]).transpose(
-            0, 3, 2, 1
+        dicom = (
+            np.array([get_dcm_array(dcm_files[o]) for o in order])
+            .transpose(0, 3, 2, 1)
+            .astype("int16")
         )
         return dicom, None
 
