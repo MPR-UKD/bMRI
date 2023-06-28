@@ -42,7 +42,7 @@ class ImageViewer(QMainWindow):
         dicom: np.ndarray | Path,
         fit_maps: np.ndarray | list | Path,
         fit_function: callable,
-        time_points: list[int],
+        time_points: list[int] | np.ndarray,
         c_int: int | None = None,
         alpha: float = 0.3,
         normalize: bool = True,
@@ -63,6 +63,8 @@ class ImageViewer(QMainWindow):
         if isinstance(fit_maps, Path):
             fit_maps = load_nii(fit_maps).array
             fit_maps[fit_maps == -1] = np.NAN
+        if isinstance(time_points, np.ndarray):
+            time_points = list(time_points)
         self.echo_time = 0
         self.time_points = time_points
         self.dicom = dicom
@@ -355,13 +357,14 @@ def example_t2star():
         / "7_T2-star_map_3D_cor_18818"
     )
     t2star = T2_T2star(dim=3)
+    time_points = T2_T2star.load_times(t2_star_folder / "acquisition_times.txt")
     app = QApplication(sys.argv)
     viewer = ImageViewer()
     viewer.start(
         dicom=t2_star_folder / "dicom.nii.gz",
         fit_maps=t2_star_folder / "params.nii.gz",
         fit_function=t2star.fit_function,
-        time_points=[0, 20, 80, 140],
+        time_points=time_points,
         c_int=1
     )
     viewer.show()

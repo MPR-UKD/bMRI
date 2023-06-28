@@ -39,10 +39,6 @@ class AbstractFitting(ABC):
         """
         self.fit_config = fit_config
 
-    @abstractmethod
-    def run(self, *args):
-        raise NotImplemented
-
     def fit(
             self,
             dicom: np.ndarray,
