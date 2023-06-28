@@ -15,6 +15,8 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.cm import get_cmap
 from matplotlib.figure import Figure
 from scipy import ndimage
+from pathlib import Path
+from src.Utilitis import load_nii
 
 
 def calc_scaling_factor(dicom_shape: tuple[int, int, int]) -> int:
@@ -32,10 +34,13 @@ class ImageViewer(QMainWindow):
     ImageViewer class to visualize DICOM data and fitted maps.
     """
 
-    def __init__(
+    def __init__(self):
+        super().__init__()
+
+    def start(
         self,
-        dicom: np.ndarray,
-        fit_maps: np.ndarray | list,
+        dicom: np.ndarray | Path,
+        fit_maps: np.ndarray | list | Path,
         fit_function: callable,
         time_points: list[int],
         c_int: int | None = None,
@@ -53,8 +58,11 @@ class ImageViewer(QMainWindow):
         :param alpha: Alpha value for overlay, optional.
         :param normalize: Flag to normalize data, optional.
         """
-        super(ImageViewer, self).__init__()
-
+        if isinstance(dicom, Path):
+            dicom = load_nii(dicom).array
+        if isinstance(fit_maps, Path):
+            fit_maps = load_nii(fit_maps).array
+            fit_maps[fit_maps == -1] = np.NAN
         self.echo_time = 0
         self.time_points = time_points
         self.dicom = dicom
@@ -274,7 +282,7 @@ class FitFunctionWidget(QWidget):
         self.canvas.draw()
 
 
-if __name__ == "__main__":
+def example_1():
     import pydicom
     from pydicom.data import get_testdata_files
 
@@ -291,7 +299,12 @@ if __name__ == "__main__":
     dicom = dicom / dicom.max() * 4016
     time_points = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
     # Create fitted_map
-    fit_maps = np.array([(dicom[-1]-dicom[0]) / (time_points[-1] - time_points[0]), np.zeros_like(dicom[0])])
+    fit_maps = np.array(
+        [
+            (dicom[-1] - dicom[0]) / (time_points[-1] - time_points[0]),
+            np.zeros_like(dicom[0]),
+        ]
+    )
 
     @njit
     def fit(x, a, b):
@@ -301,8 +314,36 @@ if __name__ == "__main__":
 
     app = QApplication(sys.argv)
 
-    viewer = ImageViewer(dicom, fit_maps, fit, time_points, 0, normalize = False)
+    viewer = ImageViewer(dicom, fit_maps, fit, time_points, 0, normalize=False)
     viewer.show()
 
     # Run the PyQt5 application
     sys.exit(app.exec_())
+
+
+def example_2():
+    from src.Fitting import T1rho_T2prep
+
+    t1rho_folder = (
+        Path(__file__).parent.parent.parent
+        / "test"
+        / "resources"
+        / "20211206_1038"
+        / "T1rho"
+    )
+    t1rho = T1rho_T2prep(dim=3)
+    app = QApplication(sys.argv)
+    viewer = ImageViewer()
+    viewer.start(
+        dicom=t1rho_folder / "dicom.nii.gz",
+        fit_maps=t1rho_folder / "params.nii.gz",
+        fit_function=t1rho.fit_function,
+        time_points=[0, 20, 80, 140],
+        c_int=1
+    )
+    viewer.show()
+    sys.exit(app.exec_())
+
+
+if __name__ == "__main__":
+    example_2()
