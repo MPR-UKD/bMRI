@@ -3,13 +3,15 @@ from pathlib import Path
 from multiprocessing import freeze_support
 
 
+error_text = (
+    "Note: Sample code - path to medical file is missing.\n\n"
+    "Please note that this sample code references a path to a file that is not in the GitHub repository. "
+    "This is because the file is sensitive medical data that cannot be shared publicly.\n\n"
+    "To run the script successfully, you will need to make a few adjustments:\n"
+    "1. place the relevant medical data in a directory on your local system.\n"
+    "2. adjust the file path in the script so that it points to the directory with your medical data."
+)
 
-error_text = "Note: Sample code - path to medical file is missing.\n\n" \
-             "Please note that this sample code references a path to a file that is not in the GitHub repository. " \
-             "This is because the file is sensitive medical data that cannot be shared publicly.\n\n" \
-             "To run the script successfully, you will need to make a few adjustments:\n" \
-             "1. place the relevant medical data in a directory on your local system.\n" \
-             "2. adjust the file path in the script so that it points to the directory with your medical data."
 
 # T2*
 def t2star_fitting_example():
@@ -26,7 +28,7 @@ def t2star_fitting_example():
     t2star.run(
         dicom_folder=t2_star_folder,
         mask_file=t2_star_folder / "mask.nii.gz",
-        min_r2=0.75
+        min_r2=0.75,
     )
 
 
@@ -42,11 +44,7 @@ def t2_fitting_example():
     if not t2_folder.exists():
         raise FileNotFoundError(error_text)
     t2 = T2_T2star(dim=3, boundary=([0.9, 20, -0.2], [1.5, 80, 0.2]), normalize=True)
-    t2.run(
-        dicom_folder=t2_folder,
-        mask_file=t2_folder / "mask.nii.gz",
-        min_r2=0.7
-    )
+    t2.run(dicom_folder=t2_folder, mask_file=t2_folder / "mask.nii.gz", min_r2=0.7)
 
 
 # T1rho

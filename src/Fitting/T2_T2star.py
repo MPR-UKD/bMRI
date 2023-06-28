@@ -69,7 +69,12 @@ class T2_T2star(AbstractFitting):
         data, te = self.read_data(dicom_folder)
         mask = load_nii(mask_file)
         if save_dicom_as_nii:
-            save_nii(data[:, :, :, ::-1], mask.affine, mask.header, dicom_folder / "dicom.nii.gz")
+            save_nii(
+                data[:, :, :, ::-1],
+                mask.affine,
+                mask.header,
+                dicom_folder / "dicom.nii.gz",
+            )
             self.save_times(te, dicom_folder / "acquisition_times.txt")
         fit_map, r2 = self.fit(dicom=data, mask=mask.array, x=te, pools=pools)
         results = save_results(

@@ -341,7 +341,7 @@ def example_2():
         fit_maps=t1rho_folder / "params.nii.gz",
         fit_function=t1rho.fit_function,
         time_points=[0, 20, 80, 140],
-        c_int=1
+        c_int=1,
     )
     viewer.show()
     sys.exit(app.exec_())
@@ -349,6 +349,7 @@ def example_2():
 
 def example_t2star():
     from src.Fitting import T2_T2star
+
     t2_star_folder = (
         Path(__file__).parent.parent.parent
         / "test"
@@ -365,10 +366,11 @@ def example_t2star():
         fit_maps=t2_star_folder / "params.nii.gz",
         fit_function=t2star.fit_function,
         time_points=time_points,
-        c_int=1
+        c_int=1,
     )
     viewer.show()
     sys.exit(app.exec_())
+
 
 if __name__ == "__main__":
     example_2()

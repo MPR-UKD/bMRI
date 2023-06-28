@@ -1,0 +1,15 @@
+name: Test bMRI
+
+on: [push]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          python -m pip install -r requirements.txt
+      - name: Run tests
+        run: python -m pytest
