@@ -1,12 +1,13 @@
-from abc import ABC, abstractmethod
+from abc import ABC
+from functools import partial
+from itertools import repeat
 from multiprocessing import Pool, cpu_count
-from typing import Callable, Tuple, Optional, List, Union, Any
+from pathlib import Path
+from typing import Callable, Tuple, Optional, Union
+
 import numpy as np
 from numba import njit
 from scipy.optimize import curve_fit
-from functools import partial
-from itertools import repeat
-from pathlib import Path
 
 
 class AbstractFitting(ABC):
@@ -133,7 +134,6 @@ class AbstractFitting(ABC):
         """
         return np.loadtxt(file_path)
 
-
 def fit_pixel(
     y: np.ndarray,
     x: np.ndarray,
@@ -141,6 +141,7 @@ def fit_pixel(
     bounds: Optional[Tuple[float, float]] = None,
     config: Optional[dict] = None,
     normalize: bool = False,
+    calc_p0: bool = True
 ) -> Union[np.ndarray, None]:
     """
     Fits a curve to the given data using the provided fit function.
@@ -152,21 +153,54 @@ def fit_pixel(
     - bounds (Tuple[float, float], optional): optional bounds for the curve fit parameters
     - config (dict, optional): optional config dictionary for curve_fit function
     - normalize (bool, optional): normalize the data before fitting (default is False)
+    - calc_p0
 
     Returns:
     - np.ndarray, None: array of curve fit parameters or None if fitting fails
     """
+
+    # Normalize data if requested
     if normalize:
-        y /= y.max()
-    kwargs = {"xtol": 0.0000000001}
+        y /= np.max(y)
+
+    # Set initial parameter values based on data
+    if calc_p0:
+        S0_init = np.max(y)
+        offset_init = np.min(y)
+        slope, _ = np.polyfit(x, np.log(y - offset_init + 0.0001), 1)
+        t2_t2star_init = -1.0 / slope
+
+        # Check bounds and set initial parameter values accordingly
+        if bounds is None:
+            p0 = [S0_init, np.exp(t2_t2star_init), offset_init]
+        else:
+            p0 = [
+                max(S0_init, bounds[0][0]),
+                max(np.exp(t2_t2star_init), bounds[0][1]),
+                max(offset_init, bounds[0][2])
+            ]
+            p0 = [
+                min(p0[0], bounds[1][0]),
+                min(p0[1], bounds[1][1]),
+                min(p0[2], bounds[1][2])
+            ]
+
+        kwargs = {"p0": p0}
+    else:
+        kwargs = {}
+
+    # Set bounds and configuration if provided
     if bounds is not None:
         kwargs["bounds"] = bounds
     if config is not None:
         kwargs.update(config)
+
     try:
+        # Perform curve fitting
         param, _ = curve_fit(fit_function, x, y, **kwargs)
     except (RuntimeError, ValueError):
         param = None
+
     return param
 
 
