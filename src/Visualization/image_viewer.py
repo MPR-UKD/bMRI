@@ -17,6 +17,32 @@ from matplotlib.figure import Figure
 from scipy import ndimage
 from pathlib import Path
 from src.Utilitis import load_nii
+from src.Utilitis.utils import get_function_parameter
+
+
+import numpy as np
+
+def crop_to_heatmap(dicom_image: np.ndarray, heat_map: np.ndarray, padding: int = 10) -> tuple:
+    """
+    Crops the given DICOM image and heatmap to the non-NaN region of the heatmap.
+
+    :param dicom_image: 3D array representing the DICOM image.
+    :param heat_map: 3D array representing the heatmap, which can include NaN values.
+    :param padding: Additional padding to be added around the non-NaN region of the heatmap.
+    :return: A tuple containing the cropped DICOM image and heatmap.
+    """
+    # Get the indices of non-NaN values
+    not_nan_indices = np.where(heat_map[0] != 0)
+
+    # Determine the slice to cut out, including the padding
+    slice_x = (max(0, not_nan_indices[0].min() - padding), min(dicom_image.shape[1], not_nan_indices[0].max() + padding))
+    slice_y = (max(0, not_nan_indices[1].min() - padding), min(dicom_image.shape[2], not_nan_indices[1].max() + padding))
+    window = (max(slice_x[0], slice_y[0]), max(slice_x[1], slice_y[1]))
+    # Cut out the desired region
+    dicom_image_cropped = dicom_image[:, window[0]:window[1], window[0]:window[1], :]
+    heat_map_cropped = heat_map[:, window[0]:window[1], window[0]:window[1], :]
+
+    return dicom_image_cropped, heat_map_cropped
 
 
 def calc_scaling_factor(dicom_shape: tuple[int, int, int]) -> int:
@@ -27,7 +53,6 @@ def calc_scaling_factor(dicom_shape: tuple[int, int, int]) -> int:
     :return: Scaling factor.
     """
     return 1000 // max(dicom_shape[1], dicom_shape[2])
-
 
 class ImageViewer(QMainWindow):
     """
@@ -46,6 +71,7 @@ class ImageViewer(QMainWindow):
         c_int: int | None = None,
         alpha: float = 0.3,
         normalize: bool = True,
+        auto_cut: bool = True,
     ):
         """
         Initialize the ImageViewer.
@@ -62,7 +88,8 @@ class ImageViewer(QMainWindow):
             dicom = load_nii(dicom).array
         if isinstance(fit_maps, Path):
             fit_maps = load_nii(fit_maps).array
-            fit_maps[fit_maps == -1] = np.NAN
+            fit_maps[fit_maps == -1] = 0
+        dicom, fit_maps = crop_to_heatmap(dicom, fit_maps, 50)
         if isinstance(time_points, np.ndarray):
             time_points = list(time_points)
         self.echo_time = 0
@@ -271,8 +298,17 @@ class FitFunctionWidget(QWidget):
         :param params: List of new parameters, optional.
         :param raw_data: List of new raw data, optional.
         """
+        results = None
         if params is not None:
             self.params = params
+            items = [
+                (_, __)
+                for _, __ in zip(get_function_parameter(self.fit_function), params)
+            ]
+            results = "\n"
+            for item in items:
+                results += f"{item[0]}: {item[1]}\n"
+            results = results[:-2]
         if raw_data is not None:
             self.y_raw = raw_data
         self.y_fit = self.fit_function(self.x_fit, *self.params)
@@ -281,6 +317,17 @@ class FitFunctionWidget(QWidget):
             self.time_points, self.y_raw, "o", markersize=4, label="Raw data"
         )
         self.axes.plot(self.x_fit, self.y_fit, "-", label="Fit function")
+        if results is not None:
+            self.axes.text(
+                0.5,
+                1,
+                results,
+                ha="center",
+                va="top",
+                fontsize=15,
+                transform=self.axes.transAxes,
+            )
+
         self.canvas.draw()
 
 
@@ -316,7 +363,8 @@ def example_1():
 
     app = QApplication(sys.argv)
 
-    viewer = ImageViewer(dicom, fit_maps, fit, time_points, 0, normalize=False)
+    viewer = ImageViewer()
+    viewer.start(dicom, fit_maps, fit, time_points, 0, normalize=False)
     viewer.show()
 
     # Run the PyQt5 application
@@ -358,7 +406,7 @@ def example_t2star():
         / "7_T2-star_map_3D_cor_18818"
     )
     t2star = T2_T2star(dim=3)
-    time_points = T2_T2star.load_times(t2_star_folder / "acquisition_times.txt")
+    time_points = t2star.load_times(t2_star_folder / "acquisition_times.txt")
     app = QApplication(sys.argv)
     viewer = ImageViewer()
     viewer.start(
@@ -373,4 +421,4 @@ def example_t2star():
 
 
 if __name__ == "__main__":
-    example_2()
+    example_t2star()
