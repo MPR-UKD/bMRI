@@ -107,5 +107,5 @@ def load_nii(file: Path) -> Mask:
     :return: Mask object representing the NIfTI data.
     """
     nimg = nib.load(file)
-    mask = Mask(nimg.get_fdata()[:, :, ::-1], nimg.affine, nimg.header)
+    mask = Mask(nimg.get_fdata(), nimg.affine, nimg.header)
     return mask

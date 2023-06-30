@@ -89,5 +89,5 @@ def save_nii(nii: np.ndarray, affine: np.ndarray, header: Any, file: Path) -> No
     :param header: Header information for the Nifti file.
     :param file: Path to save the Nifti file.
     """
-    nii[nii == np.nan] = -1
+    nii[np.isnan(nii)] = -1
     nib.save(nib.Nifti1Image(nii, affine=affine, header=header), file)
