@@ -109,6 +109,7 @@ In medical imaging, evaluating Fitted Maps such as dGEMRIC (delayed Gadolinium-E
 
 The Image Viewer is a PyQt5 based graphical user interface (GUI) that enables visualization of DICOM data and fitted maps. The viewer is contained in the `ImageViewer` class, which provides functionalities to display DICOM images in slices along with an overlaid color map, and a plot of the fitting function for the selected voxel.
 
+![](assets/image_viewer.gif)
 #### Features:
 - Display DICOM images in slices with a slider to navigate through the slices.
 - Display fitted maps as an overlay on the DICOM images.
