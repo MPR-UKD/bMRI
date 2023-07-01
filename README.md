@@ -1,6 +1,7 @@
 **Still in progress**
 
-# bMRI
+# bMRI [![Actions Status](https://github.com/ludgerradke/bMRI/blob/main/.github/workflows/test.yml/badge.svg)](https://github.com/ludgerradke/bMRI/blob/main/.github/workflows/test.yml)
+
 
 bMRI is an open-source framework designed for the analysis of bio-sensitive MRI data. The goal of this project is to provide a comprehensive, flexible and easy-to-use tool for researchers and professionals working with MRI data. **The project is currently still in progress** and is completely written in Python. 
 
