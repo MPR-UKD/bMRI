@@ -134,6 +134,7 @@ class AbstractFitting(ABC):
         """
         return np.loadtxt(file_path)
 
+
 def fit_pixel(
     y: np.ndarray,
     x: np.ndarray,
@@ -141,7 +142,7 @@ def fit_pixel(
     bounds: Optional[Tuple[float, float]] = None,
     config: Optional[dict] = None,
     normalize: bool = False,
-    calc_p0: bool = True
+    calc_p0: bool = True,
 ) -> Union[np.ndarray, None]:
     """
     Fits a curve to the given data using the provided fit function.
@@ -153,7 +154,7 @@ def fit_pixel(
     - bounds (Tuple[float, float], optional): optional bounds for the curve fit parameters
     - config (dict, optional): optional config dictionary for curve_fit function
     - normalize (bool, optional): normalize the data before fitting (default is False)
-    - calc_p0
+    - calc_p0 (bool, optional): Calc initial parameter as start values
 
     Returns:
     - np.ndarray, None: array of curve fit parameters or None if fitting fails
@@ -164,7 +165,7 @@ def fit_pixel(
         y /= np.max(y)
 
     # Set initial parameter values based on data
-    if calc_p0:
+    if calc_p0 and curve_fit(fit_function, x, y)[0].shape == 3:
         S0_init = np.max(y)
         offset_init = np.min(y)
         slope, _ = np.polyfit(x, np.log(y - offset_init + 0.0001), 1)
@@ -177,17 +178,17 @@ def fit_pixel(
             p0 = [
                 max(S0_init, bounds[0][0]),
                 max(np.exp(t2_t2star_init), bounds[0][1]),
-                max(offset_init, bounds[0][2])
+                max(offset_init, bounds[0][2]),
             ]
             p0 = [
                 min(p0[0], bounds[1][0]),
                 min(p0[1], bounds[1][1]),
-                min(p0[2], bounds[1][2])
+                min(p0[2], bounds[1][2]),
             ]
 
-        kwargs = {"p0": p0}
+        kwargs = {"xtol": 1e-6, "p0": p0}
     else:
-        kwargs = {}
+        kwargs = {"xtol": 1e-6}
 
     # Set bounds and configuration if provided
     if bounds is not None:
