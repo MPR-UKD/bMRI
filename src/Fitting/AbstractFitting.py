@@ -8,6 +8,7 @@ from typing import Callable, Tuple, Optional, Union
 import numpy as np
 from numba import njit
 from scipy.optimize import curve_fit
+from src.Utilitis.utils import get_function_parameter
 
 
 class AbstractFitting(ABC):
@@ -83,6 +84,7 @@ class AbstractFitting(ABC):
             bounds=self.bounds,
             config=self.fit_config,
             normalize=self.normalize,
+            calc_p0=True if len(get_function_parameter(self.fit_function)) == 3 else False,
         )
 
         # Create an iterator of arguments to pass to fit_pixel
@@ -165,7 +167,7 @@ def fit_pixel(
         y /= np.max(y)
 
     # Set initial parameter values based on data
-    if calc_p0 and curve_fit(fit_function, x, y)[0].shape == 3:
+    if calc_p0:
         S0_init = np.max(y)
         offset_init = np.min(y)
         slope, _ = np.polyfit(x, np.log(y - offset_init + 0.0001), 1)

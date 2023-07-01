@@ -47,7 +47,7 @@ def t2_fitting_example():
     )
     if not t2_folder.exists():
         raise FileNotFoundError(error_text)
-    t2 = T2_T2star(dim=3, boundary=([0.9, 5, -0.5], [3, 25, 0.5]), normalize=True)
+    t2 = T2_T2star(dim=3, boundary=([0.9, 5, -0.5], [3, 40, 0.5]), normalize=True)
     t2.run(dicom_folder=t2_folder, mask_file=t2_folder / "mask.nii.gz", min_r2=0.7)
 
 
@@ -59,7 +59,7 @@ def t1rho_fitting_example():
     if not t1rho_folder.exists():
         raise EnvironmentError(error_text)
     t1rho = T1rho_T2prep(
-        dim=3, boundary=([0.9, 40, -0.2], [2, 150, 0.2]), normalize=True, config=None
+        dim=3, boundary=([1, 40, -0.4], [3, 150, 0.4]), normalize=True, config=None
     )
     tsl = t1rho.get_TSL(10, 30)
     t1rho.run(

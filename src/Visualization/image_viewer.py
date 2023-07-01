@@ -1,5 +1,6 @@
 import sys
-from numba import njit
+from pathlib import Path
+
 import numpy as np
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QImage, QPixmap
@@ -14,15 +15,16 @@ from PyQt5.QtWidgets import (
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.cm import get_cmap
 from matplotlib.figure import Figure
+from numba import njit
 from scipy import ndimage
-from pathlib import Path
+
 from src.Utilitis import load_nii
 from src.Utilitis.utils import get_function_parameter
 
 
-import numpy as np
-
-def crop_to_heatmap(dicom_image: np.ndarray, heat_map: np.ndarray, padding: int = 10) -> tuple:
+def crop_to_heatmap(
+    dicom_image: np.ndarray, heat_map: np.ndarray, padding: int = 10
+) -> tuple:
     """
     Crops the given DICOM image and heatmap to the non-NaN region of the heatmap.
 
@@ -35,12 +37,20 @@ def crop_to_heatmap(dicom_image: np.ndarray, heat_map: np.ndarray, padding: int 
     not_nan_indices = np.where(heat_map[0] != 0)
 
     # Determine the slice to cut out, including the padding
-    slice_x = (max(0, not_nan_indices[0].min() - padding), min(dicom_image.shape[1], not_nan_indices[0].max() + padding))
-    slice_y = (max(0, not_nan_indices[1].min() - padding), min(dicom_image.shape[2], not_nan_indices[1].max() + padding))
+    slice_x = (
+        max(0, not_nan_indices[0].min() - padding),
+        min(dicom_image.shape[1], not_nan_indices[0].max() + padding),
+    )
+    slice_y = (
+        max(0, not_nan_indices[1].min() - padding),
+        min(dicom_image.shape[2], not_nan_indices[1].max() + padding),
+    )
     window = (max(slice_x[0], slice_y[0]), max(slice_x[1], slice_y[1]))
     # Cut out the desired region
-    dicom_image_cropped = dicom_image[:, window[0]:window[1], window[0]:window[1], :]
-    heat_map_cropped = heat_map[:, window[0]:window[1], window[0]:window[1], :]
+    dicom_image_cropped = dicom_image[
+        :, window[0] : window[1], window[0] : window[1], :
+    ]
+    heat_map_cropped = heat_map[:, window[0] : window[1], window[0] : window[1], :]
 
     return dicom_image_cropped, heat_map_cropped
 
@@ -53,6 +63,7 @@ def calc_scaling_factor(dicom_shape: tuple[int, int, int]) -> int:
     :return: Scaling factor.
     """
     return 1000 // max(dicom_shape[1], dicom_shape[2])
+
 
 class ImageViewer(QMainWindow):
     """
