@@ -62,7 +62,7 @@ def calc_scaling_factor(dicom_shape: tuple[int, int, int]) -> int:
     :param dicom_shape: Shape of the DICOM data.
     :return: Scaling factor.
     """
-    return 1000 // max(dicom_shape[1], dicom_shape[2])
+    return 500 // max(dicom_shape[1], dicom_shape[2])
 
 
 class ImageViewer(QMainWindow):
