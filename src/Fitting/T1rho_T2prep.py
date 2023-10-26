@@ -176,9 +176,9 @@ class T1rho_T2prep(AbstractFitting):
         Returns:
         - Array of spin-lock times
         """
-        x = [0, 2 * first_SL]
+        x = [0, first_SL]
         for _ in range(1, n - 1):
-            x.append(x[-1] + 2 * inc_SL)
+            x.append(x[-1] + inc_SL)
         return np.array(x)
 
     def run(
