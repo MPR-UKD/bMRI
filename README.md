@@ -23,6 +23,12 @@ The codebase is structured around a few key components:
 
 ## Installation and Requirements
 
+#### MacOS:
+
+```shell
+brew install qt
+```
+
 You can install all requirements with the command:`pip install -r requirements.txt`. 
 
 ## Usage
