@@ -1,4 +1,4 @@
-from src.Utilitis.read import get_dcm_array, load_nii
+from src.Utilitis import save_results, load_nii, get_dcm_array
 from pathlib import Path
 import numpy as np
 from typing import Union, Tuple, Any
@@ -37,23 +37,35 @@ class FittedMap:
         mask_file = Path(mask_file)
 
         # Load the DICOM files and transpose the dimensions
-        fitted_map = get_dcm_array([_ for _ in dcm_folder.glob("*.dcm")]).transpose(
-            (2, 1, 0)
+        fitted_map = (
+            get_dcm_array([_ for _ in dcm_folder.glob("*.dcm")])
+            .transpose((2, 1, 0))
+            .astype("float32")
         )
 
         # Load the mask
         mask = load_nii(mask_file)
 
         # Process the fitted map
+        fitted_map[(mask.array == 0)] = np.NAN
         for i in range(1, int(mask.array.max()) + 1):
-            fit_map = fitted_map.copy().astype("float64")
-            fit_map[mask != i] = 0
             try:
-                low = np.percentile(fit_map[mask.array == i], self.low_percentile)
-                up = np.percentile(fit_map[mask.array == i], self.up_percentile)
-                fit_map[fit_map < low] = np.nan
-                fit_map[fit_map > up] = np.nan
+                low = np.percentile(fitted_map[mask.array == i], self.low_percentile)
+                up = np.percentile(fitted_map[mask.array == i], self.up_percentile)
+                fitted_map[(mask.array == i) & (fitted_map < low)] = np.NAN
+                fitted_map[(mask.array == i) & (fitted_map > up)] = np.NAN
             except IndexError:
                 pass
 
+        save_results(
+            fit_map=fitted_map,
+            affine=mask.affine,
+            nii_folder=dcm_folder,
+            results_path=dcm_folder,
+            function=None,
+            r2=None,
+            mask=mask.array,
+            header=mask.header,
+            return_params=None,
+        )
         return fitted_map, mask

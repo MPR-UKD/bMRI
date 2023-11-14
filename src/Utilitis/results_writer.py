@@ -45,7 +45,8 @@ def save_results(
     save_nii(fit_map, affine, header, nii_folder / "params.nii.gz")
 
     parameters = ["value"] if function is None else get_function_parameter(function)
-
+    if function is None:
+        fit_map = [fit_map]
     for ii, parameter in enumerate(parameters):
         save_nii(fit_map[ii], affine, header, nii_folder / f"{parameter}_map.nii.gz")
         results = {}

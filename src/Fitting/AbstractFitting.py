@@ -84,7 +84,9 @@ class AbstractFitting(ABC):
             bounds=self.bounds,
             config=self.fit_config,
             normalize=self.normalize,
-            calc_p0=True if len(get_function_parameter(self.fit_function)) == 3 else False,
+            calc_p0=True
+            if len(get_function_parameter(self.fit_function)) == 3
+            else False,
         )
 
         # Create an iterator of arguments to pass to fit_pixel
@@ -172,6 +174,9 @@ def fit_pixel(
         offset_init = np.min(y)
         slope, _ = np.polyfit(x, np.log(y - offset_init + 0.0001), 1)
         t2_t2star_init = -1.0 / slope
+
+        if t2_t2star_init > 5:
+            t2_t2star_init = 5  # np.exp(10) == 22026 ms
 
         # Check bounds and set initial parameter values accordingly
         if bounds is None:
