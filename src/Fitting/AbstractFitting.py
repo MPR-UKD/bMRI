@@ -166,7 +166,7 @@ def fit_pixel(
 
     # Normalize data if requested
     if normalize:
-        y /= np.max(y)
+        y /= np.max(y) if np.max(y) > 0 else 1
 
     # Set initial parameter values based on data
     if calc_p0:
@@ -208,7 +208,6 @@ def fit_pixel(
         param, _ = curve_fit(fit_function, x, y, **kwargs)
     except (RuntimeError, ValueError):
         param = None
-
     return param
 
 
