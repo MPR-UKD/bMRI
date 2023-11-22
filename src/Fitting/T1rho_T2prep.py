@@ -160,6 +160,7 @@ class T1rho_T2prep(AbstractFitting):
         """
 
         # Call the fit method from the parent class using the provided dicom, mask, and x data
+        mask = mask[:, :, ::-1]
         fit_maps, r2_map = super().fit(dicom, mask, x, pools=pools, min_r2=min_r2)
 
         return fit_maps, r2_map
