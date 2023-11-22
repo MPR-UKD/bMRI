@@ -4,7 +4,7 @@ from pathlib import Path
 import csv
 from typing import Callable, List, Union, Any, Optional
 from src.Utilitis.utils import get_function_parameter
-
+from copy import deepcopy
 
 def save_results(
     fit_map: np.ndarray,
@@ -47,6 +47,7 @@ def save_results(
     parameters = ["value"] if function is None else get_function_parameter(function)
     if function is None:
         fit_map = [fit_map]
+    mask = mask.round()
     for ii, parameter in enumerate(parameters):
         save_nii(fit_map[ii], affine, header, nii_folder / f"{parameter}_map.nii.gz")
         results = {}
@@ -90,5 +91,6 @@ def save_nii(nii: np.ndarray, affine: np.ndarray, header: Any, file: Path) -> No
     :param header: Header information for the Nifti file.
     :param file: Path to save the Nifti file.
     """
+    nii = deepcopy(nii)
     nii[np.isnan(nii)] = -1
     nib.save(nib.Nifti1Image(nii, affine=affine, header=header), file)
